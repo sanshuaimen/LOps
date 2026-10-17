@@ -1,0 +1,9 @@
+2026-07-27T09:00:00.000Z ::group::Run mvn test
+2026-07-27T09:00:01.000Z [INFO] Running com.example.b.PricingServiceTest
+2026-07-27T09:00:01.500Z [ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.020 s <<< FAILURE! - in com.example.b.PricingServiceTest
+2026-07-27T09:00:01.501Z [ERROR] testApplyDiscount  Time elapsed: 0.010 s  <<< ERROR!
+2026-07-27T09:00:01.502Z java.lang.NullPointerException: Cannot invoke "String.length()" because "customerType" is null
+2026-07-27T09:00:01.503Z 	at com.example.b.PricingService.applyDiscount(PricingService.java:7)
+2026-07-27T09:00:01.504Z 	at com.example.b.PricingServiceTest.testApplyDiscount(PricingServiceTest.java:6)
+2026-07-27T09:00:02.000Z [INFO] BUILD FAILURE
+2026-07-27T09:00:02.001Z ::endgroup::

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.example.UserServiceTest" tests="1" errors="1" failures="0" skipped="0" time="0.045">
+  <testcase name="testPremiumDiscount" classname="com.example.UserServiceTest" time="0.012">
+    <error message="Cannot invoke &quot;com.example.CustomerType.getDiscountRate()&quot; because the return value of &quot;com.example.Customer.getType()&quot; is null" type="java.lang.NullPointerException">java.lang.NullPointerException: Cannot invoke "com.example.CustomerType.getDiscountRate()" because the return value of "com.example.Customer.getType()" is null
+	at com.example.UserService.calculateDiscount(UserService.java:9)
+	at com.example.UserServiceTest.testPremiumDiscount(UserServiceTest.java:7)
+</error>
+  </testcase>
+</testsuite>

@@ -1,0 +1,14 @@
+[Pipeline] { (Test)
+[Pipeline] sh
++ mvn test
+[INFO] Running com.example.IntegrationTest
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 30.045 s <<< FAILURE! - in com.example.IntegrationTest
+[ERROR] testExternalServiceCall  Time elapsed: 30.012 s  <<< ERROR!
+java.net.SocketTimeoutException: Connect timed out
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:551)
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592)
+	at com.example.IntegrationTest.testExternalServiceCall(IntegrationTest.java:22)
+[Pipeline] }
+[Pipeline] // stage
+Build step 'Execute shell' marked build as failure
+Finished: FAILURE

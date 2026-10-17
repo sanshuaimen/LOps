@@ -1,0 +1,9 @@
+.superpowers/
+target/
+fixtures/sample-repo/
+fixtures/multi-module-repo/
+dependency-reduced-pom.xml
+.env
+config.yaml
+config.yml
+docs/

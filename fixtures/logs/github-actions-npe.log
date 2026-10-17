@@ -1,0 +1,16 @@
+2026-07-20T10:15:30.000Z ::group::Run mvn test
+2026-07-20T10:15:31.000Z [INFO] Scanning for projects...
+2026-07-20T10:15:32.000Z [INFO] Building sample-app 1.0.0
+2026-07-20T10:15:33.000Z [INFO] Running com.example.UserServiceTest
+2026-07-20T10:15:33.500Z [ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.045 s <<< FAILURE! - in com.example.UserServiceTest
+2026-07-20T10:15:33.501Z [ERROR] testPremiumDiscount  Time elapsed: 0.012 s  <<< ERROR!
+2026-07-20T10:15:33.502Z java.lang.NullPointerException: Cannot invoke "com.example.CustomerType.getDiscountRate()" because the return value of "com.example.Customer.getType()" is null
+2026-07-20T10:15:33.503Z 	at com.example.UserService.calculateDiscount(UserService.java:9)
+2026-07-20T10:15:33.504Z 	at com.example.UserServiceTest.testPremiumDiscount(UserServiceTest.java:7)
+2026-07-20T10:15:33.505Z 	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+2026-07-20T10:15:33.506Z 	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728)
+2026-07-20T10:15:34.000Z [INFO] Results:
+2026-07-20T10:15:34.001Z [ERROR] Failures:
+2026-07-20T10:15:34.002Z [ERROR]   UserServiceTest.testPremiumDiscount
+2026-07-20T10:15:34.500Z [INFO] BUILD FAILURE
+2026-07-20T10:15:34.501Z ::endgroup::

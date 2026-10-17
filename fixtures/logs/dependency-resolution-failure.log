@@ -1,0 +1,7 @@
+2026-07-27T09:30:00.000Z ::group::Run mvn verify
+2026-07-27T09:30:01.000Z [INFO] Scanning for projects...
+2026-07-27T09:30:05.000Z [ERROR] Failed to execute goal on project sample-app: Could not resolve dependencies for project com.example:sample-app:jar:1.0.0: Could not find artifact com.example:pricing-lib:jar:2.3.0 in central (https://repo.maven.apache.org/maven2)
+2026-07-27T09:30:05.001Z [ERROR]
+2026-07-27T09:30:05.002Z [ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+2026-07-27T09:30:05.500Z [INFO] BUILD FAILURE
+2026-07-27T09:30:05.501Z ::endgroup::
