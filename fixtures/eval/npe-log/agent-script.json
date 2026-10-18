@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NullPointerException"},
+    "hypothesis": "the console log holds the direct NPE evidence and a project stack frame"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/UserService.java", "startLine": 1, "endLine": 20},
+    "hypothesis": "UserService.java:9 dereferences a null customer passed by the test"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "UserServiceTest.testPremiumDiscount passes a null Customer into UserService.calculateDiscount, which dereferences customer.type() at line 9 and throws NPE: Customer type is null",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "guard against a null Customer in calculateDiscount, or fix the test to pass a premium customer"
+  }
+]

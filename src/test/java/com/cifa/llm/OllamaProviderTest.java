@@ -1,6 +1,7 @@
 package com.cifa.llm;
 
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,5 +42,27 @@ class OllamaProviderTest {
     void extractContentReturnsMessageContent() {
         String body = "{\"message\": {\"role\": \"assistant\", \"content\": \"hello\"}}";
         assertEquals("hello", OllamaProvider.extractContent(body));
+    }
+
+    @Test
+    void extractReplyCarriesProviderReportedUsage() {
+        String body = """
+                {"message": {"role": "assistant", "content": "decision"},
+                 "prompt_eval_count": 733, "eval_count": 121}
+                """;
+        ProviderReply reply = OllamaProvider.extractReply(body);
+        assertEquals("decision", reply.text());
+        assertEquals(733, reply.inputTokens());
+        assertEquals(121, reply.outputTokens());
+    }
+
+    @Test
+    void structuredRequestUsesOptionsNumPredictNotTopLevelMaxTokens() {
+        LLMRequest request = new LLMRequest("system", "prompt", java.util.List.of());
+        JSONObject body = new JSONObject(OllamaProvider.buildStructuredRequestBody("m", request));
+        assertFalse(body.has("max_tokens"), "Ollama ignores top-level max_tokens");
+        assertFalse(body.has("temperature"), "Ollama ignores top-level temperature");
+        assertEquals(request.maxTokens(), body.getJSONObject("options").getInt("num_predict"));
+        assertEquals(request.temperature(), body.getJSONObject("options").getDouble("temperature"));
     }
 }

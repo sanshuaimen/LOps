@@ -1,0 +1,16 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "the pom declares a dependency that cannot be resolved; confirm coordinates from the POM"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "sample-app 1.0.0 declares dependency com.example:pricing-lib:2.3.0 which is not resolvable from central (missing artifact)",
+    "evidenceIds": ["LOG-001", "DEP-001"],
+    "confidence": 85,
+    "suggestedAction": "publish pricing-lib 2.3.0 or point the dependency at an existing version"
+  }
+]

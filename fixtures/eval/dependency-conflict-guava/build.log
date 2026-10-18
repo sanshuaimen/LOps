@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ aggregator ---
+[ERROR] Tests run: 3, Failures: 0, Errors: 3
+[ERROR] SearchServiceTest.scansDeeply  Time elapsed: 0.1 s  <<< ERROR!
+java.lang.NoSuchMethodError: com.google.common.collect.ImmutableList.toImmutableList()Ljava/util/stream/Collector;
+	at com.example.search.SearchIndex.load(SearchIndex.java:9)
+	at com.example.search.SearchServiceTest.scansDeeply(SearchServiceTest.java:17)
+[INFO] BUILD FAILURE

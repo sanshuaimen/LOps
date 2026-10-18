@@ -1,38 +1,27 @@
 package com.cifa.cli;
 
 import com.cifa.classification.ClassifiedFailure;
-import com.cifa.classification.FailureCategory;
-import com.cifa.classification.FailureClassifier;
 import com.cifa.config.ConfigFile;
 import com.cifa.config.ConfigResolver;
 import com.cifa.context.AnalysisContext;
 import com.cifa.context.ContextBudget;
-import com.cifa.context.ContextBuilder;
-import com.cifa.correlation.CorrelatedCommit;
-import com.cifa.correlation.GitCorrelator;
-import com.cifa.ingestion.LogNormalizer;
+import com.cifa.integration.GitHubCommentPoster;
 import com.cifa.llm.AnalysisResult;
 import com.cifa.llm.AnthropicProvider;
 import com.cifa.llm.EvidenceValidator;
 import com.cifa.llm.LLMProvider;
 import com.cifa.llm.OllamaProvider;
-import com.cifa.parsing.FailureLogParser;
-import com.cifa.parsing.ParsedFailure;
-import com.cifa.parsing.StackFrame;
-import com.cifa.parsing.SurefireReportParser;
 import com.cifa.report.HtmlRenderer;
 import com.cifa.report.MarkdownRenderer;
 import com.cifa.report.ReportRenderer;
 import com.cifa.report.SlackRenderer;
-import com.cifa.integration.GitHubCommentPoster;
+import com.cifa.service.DiagnosisRequest;
+import com.cifa.service.DiagnosisTaskService;
 
 import java.net.http.HttpClient;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public final class Main {
 
@@ -42,6 +31,12 @@ public final class Main {
         String formatFlag = null;
         String repoSlugFlag = null;
         String prNumberFlag = null;
+        String modeFlag = null;
+        String traceFlag = null;
+        String fakeScriptFlag = null;
+        String flakyHistoryFlag = null;
+        String taskIdFlag = null;
+        String providerFlag = null;
         boolean postComment = false;
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -51,57 +46,45 @@ public final class Main {
                 case "--repo-slug" -> repoSlugFlag = ++i < args.length ? args[i] : null;
                 case "--pr-number" -> prNumberFlag = ++i < args.length ? args[i] : null;
                 case "--post-comment" -> postComment = true;
+                case "--mode" -> modeFlag = ++i < args.length ? args[i] : null;
+                case "--trace" -> traceFlag = ++i < args.length ? args[i] : null;
+                case "--fake-script" -> fakeScriptFlag = ++i < args.length ? args[i] : null;
+                case "--flaky-history" -> flakyHistoryFlag = ++i < args.length ? args[i] : null;
+                case "--task-id" -> taskIdFlag = ++i < args.length ? args[i] : null;
+                case "--provider" -> providerFlag = ++i < args.length ? args[i] : null;
                 default -> { }
             }
         }
         if (logPath == null || repoPath == null) {
-            System.err.println("Usage: analyze --log <path> --repo <path> [--format markdown|html|slack] "
-                    + "[--post-comment [--repo-slug owner/repo] [--pr-number N]]");
+            System.err.println("Usage: analyze --log <path> --repo <path> [--mode baseline|agent] [--trace <file>] "
+                    + "[--fake-script <file>] [--flaky-history <file>] [--task-id <id>] "
+                    + "[--format markdown|html|slack] [--post-comment [--repo-slug owner/repo] [--pr-number N]]");
             System.exit(1);
             return;
         }
 
         Map<String, String> fileConfig = ConfigFile.load(Path.of("."));
 
-        String rawLog = Files.readString(Path.of(logPath));
-        String normalized = LogNormalizer.normalize(rawLog);
-
-        Path repoRoot = Path.of(repoPath);
-        ParsedFailure xmlFailure = SurefireReportParser.parse(repoRoot);
-        ParsedFailure failure;
-        if (xmlFailure != null) {
-            System.err.println("Using Surefire/Failsafe XML report(s) found under " + repoRoot + "; ignoring --log content.");
-            failure = xmlFailure;
-        } else {
-            failure = FailureLogParser.parse(normalized);
-        }
-        ClassifiedFailure classified = FailureClassifier.classify(failure);
-
-        CorrelatedCommit commit = null;
-        String sourceSnippet = "";
-        List<String> correlationNotes = new ArrayList<>();
-        if (classified.category() != FailureCategory.INFRA_FLAKY) {
-            StackFrame projectFrame = GitCorrelator.firstProjectFrame(failure.frames());
-            if (projectFrame != null) {
-                Optional<Path> filePath = GitCorrelator.resolveFilePathAcrossModules(repoRoot, projectFrame);
-                if (filePath.isPresent()) {
-                    commit = GitCorrelator.correlate(repoRoot, filePath.get(), projectFrame.lineNumber());
-                    sourceSnippet = ContextBuilder.readSourceSnippet(filePath.get(), projectFrame.lineNumber());
-                } else {
-                    correlationNotes.add("source file could not be located for " + projectFrame.className());
-                }
-            }
-        }
-
         String contextBudgetStr = ConfigResolver.resolve(null, System.getenv("CONTEXT_CHAR_BUDGET"), fileConfig, "CONTEXT_CHAR_BUDGET", null);
         ContextBudget budget = parseContextBudget(contextBudgetStr);
-        AnalysisContext context = ContextBuilder.build(classified, commit, sourceSnippet, correlationNotes, budget);
+        Path repoRoot = Path.of(repoPath);
+        var prepared = new com.cifa.service.DiagnosisTaskService().prepare(
+                new com.cifa.service.DiagnosisRequest(Path.of(logPath), repoRoot, budget));
+        if (prepared.usedXmlReport()) {
+            System.err.println("Using Surefire/Failsafe XML report(s) found under " + repoRoot + "; ignoring --log content.");
+        }
+        ClassifiedFailure classified = prepared.classified();
+        AnalysisContext context = prepared.context();
         if (!context.excludedNotes().isEmpty()) {
             System.err.println("Context notes: " + String.join("; ", context.excludedNotes()));
         }
 
-        String provider = ConfigResolver.resolve(null, System.getenv("LLM_PROVIDER"), fileConfig, "LLM_PROVIDER", "ollama");
+        String provider = ConfigResolver.resolve(providerFlag, System.getenv("LLM_PROVIDER"), fileConfig, "LLM_PROVIDER", "ollama");
+        String fakeScript = ConfigResolver.resolve(fakeScriptFlag, System.getenv("FAKE_SCRIPT"), fileConfig, "FAKE_SCRIPT", null);
         LLMProvider llm = switch (provider) {
+            case "fake" -> fakeScript != null
+                    ? com.cifa.llm.FakeLLMProvider.recorded(Path.of(fakeScript))
+                    : new com.cifa.llm.FakeLLMProvider();
             case "ollama" -> {
                 String model = ConfigResolver.resolve(null, System.getenv("OLLAMA_MODEL"), fileConfig, "OLLAMA_MODEL", "deepseek-r1:8b");
                 yield new OllamaProvider("http://localhost:11434", model);
@@ -116,11 +99,19 @@ public final class Main {
                 yield new AnthropicProvider(apiKey, model);
             }
             default -> throw new IllegalArgumentException(
-                    "Unsupported LLM_PROVIDER '" + provider + "' — supported values: ollama, anthropic");
+                    "Unsupported LLM_PROVIDER '" + provider + "' — supported values: fake, ollama, anthropic");
         };
 
-        AnalysisResult result = llm.analyze(context);
-        List<String> unverified = EvidenceValidator.findUnverified(result, context);
+        String mode = ConfigResolver.resolve(modeFlag, System.getenv("DIAGNOSIS_MODE"), fileConfig, "DIAGNOSIS_MODE", "baseline");
+        if (mode.equals("agent")) {
+            runAgentMode(llm, provider, Path.of(logPath), repoRoot, budget,
+                    traceFlag, flakyHistoryFlag, taskIdFlag, fileConfig);
+            return;
+        }
+
+        com.cifa.service.BaselineResult baseline = new com.cifa.service.BaselineFailureAnalyzer().analyze(prepared, llm);
+        AnalysisResult result = baseline.analysis();
+        List<String> unverified = baseline.unverifiedEvidence();
 
         String format = ConfigResolver.resolve(formatFlag, System.getenv("DEFAULT_FORMAT"), fileConfig, "DEFAULT_FORMAT", "markdown");
         ReportRenderer renderer = switch (format) {
@@ -134,6 +125,48 @@ public final class Main {
 
         if (postComment) {
             postGitHubComment(classified, result, unverified, repoSlugFlag, prNumberFlag);
+        }
+    }
+
+    private static void runAgentMode(LLMProvider llm, String providerName, Path logPath, Path repoRoot,
+                                     ContextBudget budget, String traceFlag, String flakyHistoryFlag,
+                                     String taskIdFlag, Map<String, String> fileConfig) throws Exception {
+        String taskId = taskIdFlag != null ? taskIdFlag
+                : "local-" + Long.toString(System.currentTimeMillis(), 36);
+        Path traceFile = Path.of(traceFlag != null ? traceFlag : "agent-trace-" + taskId + ".jsonl");
+        com.cifa.tool.FlakyHistorySource flakyHistory = com.cifa.tool.JsonFlakyHistorySource.empty();
+        if (flakyHistoryFlag != null) {
+            flakyHistory = new com.cifa.tool.JsonFlakyHistorySource(Path.of(flakyHistoryFlag));
+        }
+
+        String modelName = providerName.equals("fake") ? "fake" : ConfigResolver.resolve(
+                null, System.getenv("AGENT_MODEL"), fileConfig, "AGENT_MODEL", providerName + "-default");
+        var agentBudget = com.cifa.agent.InvestigationBudget.defaults();
+
+        try (com.cifa.trace.JsonlTraceRecorder traceRecorder = new com.cifa.trace.JsonlTraceRecorder(traceFile)) {
+            var output = new com.cifa.service.AgentDiagnosisService().investigate(
+                    new com.cifa.service.DiagnosisRequest(logPath, repoRoot, budget),
+                    llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory);
+
+            if (output.diagnosis() == null) {
+                // MODEL_FAILURE keeps a null diagnosis on purpose — it must not be
+                // dressed up as an UNKNOWN. Report the structured failure and exit non-zero.
+                System.out.println(new org.json.JSONObject()
+                        .put("taskId", taskId)
+                        .put("stopReason", output.state().stopReason().name())
+                        .put("diagnosis", org.json.JSONObject.NULL)
+                        .put("evidenceCount", output.catalog().size())
+                        .put("trace", traceFile.toAbsolutePath().toString())
+                        .toString(2));
+                System.err.println("Agent investigation failed: " + output.state().stopReason()
+                        + " (trace: " + traceFile.toAbsolutePath() + ")");
+                System.exit(2);
+                return;
+            }
+
+            System.out.println("== Agent diagnosis (" + taskId + ") ==");
+            System.out.println(output.diagnosis().toJson().toString(2));
+            System.out.println("trace: " + traceFile.toAbsolutePath());
         }
     }
 

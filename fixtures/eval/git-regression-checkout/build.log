@@ -1,0 +1,6 @@
+[ERROR] Tests run: 5, Failures: 1, Errors: 0
+[ERROR] CheckoutServiceTest.totalsWithTax  Time elapsed: 0.02 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "BigDecimal.signum()" because "taxRate" is null
+	at com.example.checkout.CheckoutService.totalsWithTax(CheckoutService.java:13)
+	at com.example.checkout.CheckoutServiceTest.totalsWithTax(CheckoutServiceTest.java:9)
+[INFO] BUILD FAILURE

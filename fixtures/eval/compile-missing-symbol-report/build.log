@@ -1,0 +1,9 @@
+[INFO] Building reporting 1.0
+[INFO] --- maven-compiler-plugin:3.11.0:compile ---
+[INFO] Changes detected - recompiling the module
+[INFO] Compiling 14 source files
+[ERROR] /home/ci/work/reporting/src/main/java/com/example/report/ReportService.java:[7,33] cannot find symbol
+[ERROR]   symbol:   class PriceCalculator
+[ERROR]   location: package com.example.billing
+[INFO] 1 error
+[INFO] BUILD FAILURE

@@ -1,0 +1,24 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      # ubuntu-latest ships Docker, so the Testcontainers suite (Flyway migration,
+      # executor, submission protocol, cancel/recovery/isolation, CLI-REST equivalence)
+      # runs here in full — closing what the Docker-less dev box skips.
+      - name: Run full test suite
+        run: mvn -B test

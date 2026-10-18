@@ -1,0 +1,8 @@
+{
+  "id": "git-regression-checkout",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["taxrate"],
+  "evidenceLocators": ["CheckoutService.java:13"],
+  "requiredTools": ["git_history"],
+  "relevantTools": ["git_history", "source_location"]
+}

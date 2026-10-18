@@ -27,6 +27,26 @@ class AnthropicProviderTest {
     }
 
     @Test
+    void extractReplyCarriesProviderReportedUsage() {
+        String body = """
+                {"content": [{"type": "text", "text": "{\\"type\\":\\"unknown\\"}"}],
+                 "usage": {"input_tokens": 812, "output_tokens": 96}}
+                """;
+        ProviderReply reply = AnthropicProvider.extractReply(body);
+        assertEquals(812, reply.inputTokens());
+        assertEquals(96, reply.outputTokens());
+        assertTrue(reply.text().contains("unknown"));
+    }
+
+    @Test
+    void extractReplyTreatsMissingUsageAsZero() {
+        ProviderReply reply = AnthropicProvider.extractReply(
+                "{\"content\": [{\"type\": \"text\", \"text\": \"x\"}]}");
+        assertEquals(0, reply.inputTokens());
+        assertEquals(0, reply.outputTokens());
+    }
+
+    @Test
     void parseModelOutputParsesTheEmbeddedJson() throws Exception {
         String content = AnthropicProvider.extractContent(CLEAN_ANTHROPIC_RESPONSE);
         AnalysisResult result = AnthropicProvider.parseModelOutput(content);

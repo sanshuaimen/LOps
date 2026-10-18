@@ -1,0 +1,16 @@
+{
+  "com.example.gateway.GatewayClientTest.callsUnderLoad": [
+    {"build": "b-1001", "passed": true},
+    {"build": "b-1002", "passed": true},
+    {"build": "b-1003", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-1004", "passed": true},
+    {"build": "b-1005", "passed": true},
+    {"build": "b-1006", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-1007", "passed": true},
+    {"build": "b-1008", "passed": false, "rerunPassed": false, "relatedCommit": "5d81b2f"},
+    {"build": "b-1009", "passed": true},
+    {"build": "b-1010", "passed": true},
+    {"build": "b-1011", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-1012", "passed": true}
+  ]
+}

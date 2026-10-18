@@ -1,5 +1,7 @@
 package com.cifa.correlation;
 
+import com.cifa.git.GitCommandExecutor;
+import com.cifa.git.GitCommandResult;
 import com.cifa.parsing.StackFrame;
 
 import java.io.File;
@@ -9,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 public final class GitCorrelator {
@@ -71,23 +72,14 @@ public final class GitCorrelator {
 
     public static CorrelatedCommit correlate(Path repoRoot, Path filePath, int lineNumber)
             throws IOException, InterruptedException {
-        Path relative = repoRoot.relativize(filePath);
         int start = Math.max(1, lineNumber - 3);
-        int end = lineNumber + 3;
-        String rangeSpec = start + "," + end + ":" + relative;
-
-        ProcessBuilder pb = new ProcessBuilder(
-                "git", "-C", repoRoot.toString(), "log", "-1", "--no-color", "-L", rangeSpec
-        );
-        pb.redirectErrorStream(true);
-        Process process = pb.start();
-        String output = new String(process.getInputStream().readAllBytes());
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
+        int end = Math.max(start, lineNumber + 3);
+        GitCommandResult result = new GitCommandExecutor(repoRoot)
+                .logLineRange(filePath, start, end);
+        if (!result.success() || result.outputTruncated() || result.stdout().isBlank()) {
             return null;
         }
-
-        return output.isBlank() ? null : parseGitLogOutput(output);
+        return parseGitLogOutput(result.stdout());
     }
 
     static CorrelatedCommit parseGitLogOutput(String output) {

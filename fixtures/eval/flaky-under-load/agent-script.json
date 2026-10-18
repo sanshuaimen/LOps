@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "IllegalStateException"},
+    "hypothesis": "the log shows the direct failure and which upstream status triggered it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.gateway.GatewayClientTest.callsUnderLoad"},
+    "hypothesis": "a 503 from an external upstream under load is a flakiness candidate; the independent history source decides, not git history"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "GatewayClient.call throws when the upstream returns 503 under load; the independent history shows repeated failures with rerun recoveries and no related code change, so this is an intermittent environment/upstream failure rather than a code regression",
+    "evidenceIds": ["LOG-002", "FLAKY-001"],
+    "confidence": 65,
+    "suggestedAction": "add retry-with-backoff for 5xx responses and mark the test as environment-sensitive"
+  }
+]

@@ -67,6 +67,50 @@ public final class OllamaProvider implements LLMProvider {
         }
     }
 
+    @Override
+    public LLMResponse invoke(LLMRequest request) throws IOException, InterruptedException {
+        ProviderReply reply = extractReply(callOllama(request));
+        return LLMResponse.parse(THINK_BLOCK.matcher(reply.text()).replaceAll("").trim(),
+                reply.inputTokens(), reply.outputTokens());
+    }
+
+    public String model() {
+        return model;
+    }
+
+    String callOllama(LLMRequest request) throws IOException, InterruptedException, JSONException {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/api/chat"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(buildStructuredRequestBody(model, request)))
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        return extractContent(response.body());
+    }
+
+    static String buildStructuredRequestBody(String model, LLMRequest request) {
+        JSONObject body = new JSONObject();
+        body.put("model", model);
+        body.put("stream", false);
+        // Ollama ignores a top-level max_tokens; generation limits live in options.num_predict.
+        body.put("options", new JSONObject()
+                .put("num_predict", request.maxTokens())
+                .put("temperature", request.temperature()));
+        JSONArray messages = new JSONArray();
+        if (!request.systemPrompt().isBlank()) {
+            messages.put(new JSONObject().put("role", "system").put("content", request.systemPrompt()));
+        }
+        for (LLMMessage message : request.messages()) {
+            messages.put(new JSONObject().put("role", message.role()).put("content", message.content()));
+        }
+        body.put("messages", messages);
+        // P0 protocol decision (docs/decisions.md): no tools field on the wire —
+        // models that answer with message.tool_calls leave message.content
+        // missing and extractContent would throw. Catalog text lives in the
+        // system prompt instead.
+        return body.toString();
+    }
+
     String callOllama(String prompt) throws IOException, InterruptedException, JSONException {
         JSONObject body = new JSONObject();
         body.put("model", model);
@@ -87,8 +131,15 @@ public final class OllamaProvider implements LLMProvider {
     }
 
     static String extractContent(String responseBody) throws JSONException {
+        return extractReply(responseBody).text();
+    }
+
+    static ProviderReply extractReply(String responseBody) throws JSONException {
         JSONObject json = new JSONObject(responseBody);
-        return json.getJSONObject("message").getString("content");
+        String content = json.getJSONObject("message").getString("content");
+        return new ProviderReply(content,
+                json.optInt("prompt_eval_count", 0),
+                json.optInt("eval_count", 0));
     }
 
     static String buildPrompt(AnalysisContext ctx, boolean strict) {

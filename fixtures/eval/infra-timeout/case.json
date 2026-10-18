@@ -1,0 +1,7 @@
+{
+  "id": "infra-timeout",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["timeout"],
+  "evidenceLocators": ["SocketTimeoutException"],
+  "relevantTools": ["failure_evidence", "flaky_test_history"]
+}

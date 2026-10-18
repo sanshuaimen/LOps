@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the compiler names the missing symbol and the module"
+  },
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "a missing symbol in module-b may come from a dependency whose classes are not on the compile classpath; check the POM"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "module-b references variable legacyPricing that is not on the compile classpath: legacy-pricing is declared with scope provided, so its classes are absent at compile time",
+    "evidenceIds": ["LOG-002", "DEP-001"],
+    "confidence": 70,
+    "suggestedAction": "change legacy-pricing scope to compile or add the missing module to the reactor"
+  }
+]

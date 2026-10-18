@@ -1,0 +1,5 @@
+[INFO] --- maven-compiler-plugin:3.11.0:compile @ orders ---
+[ERROR] /ci/work/orders/src/main/java/com/example/orders/CheckoutController.java:[6,26] cannot find symbol
+[ERROR]   symbol:   method calcTotal()
+[ERROR]   location: variable order of type com.example.orders.Order
+[INFO] BUILD FAILURE

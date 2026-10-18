@@ -1,0 +1,8 @@
+{
+  "id": "flaky-under-load",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["503"],
+  "evidenceLocators": ["GatewayClient.java:15"],
+  "requiredTools": ["flaky_history"],
+  "relevantTools": ["flaky_history", "surefire_report"]
+}

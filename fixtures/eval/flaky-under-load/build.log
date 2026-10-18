@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ gateway ---
+[ERROR] Tests run: 8, Failures: 1, Errors: 0
+[ERROR] GatewayClientTest.callsUnderLoad  Time elapsed: 2.1 s  <<< FAILURE!
+java.lang.IllegalStateException: upstream returned 503
+	at com.example.gateway.GatewayClient.call(GatewayClient.java:15)
+	at com.example.gateway.GatewayClientTest.callsUnderLoad(GatewayClientTest.java:8)
+[INFO] BUILD FAILURE

@@ -1,0 +1,7 @@
+{
+  "id": "npe-log",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["null", "customer"],
+  "evidenceLocators": ["UserService.java:9"],
+  "relevantTools": ["surefire_report", "source_location"]
+}

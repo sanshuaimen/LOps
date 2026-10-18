@@ -1,0 +1,7 @@
+{
+  "id": "multi-module-npe",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["customerType"],
+  "evidenceLocators": ["PricingService.java:7"],
+  "relevantTools": ["source_location", "git_history"]
+}

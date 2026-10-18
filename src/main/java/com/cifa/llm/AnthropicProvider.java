@@ -55,6 +55,47 @@ public final class AnthropicProvider implements LLMProvider {
         }
     }
 
+    @Override
+    public LLMResponse invoke(LLMRequest request) throws IOException, InterruptedException {
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(API_URL))
+                .header("x-api-key", apiKey)
+                .header("anthropic-version", ANTHROPIC_VERSION)
+                .header("content-type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(buildStructuredRequestBody(model, request)))
+                .build();
+        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+        if (isErrorStatus(response.statusCode())) {
+            throw new IOException("Anthropic API returned HTTP " + response.statusCode());
+        }
+        ProviderReply reply = extractReply(response.body());
+        return LLMResponse.parse(reply.text(), reply.inputTokens(), reply.outputTokens());
+    }
+
+    public String model() {
+        return model;
+    }
+
+    // P0 protocol decision (docs/decisions.md): no tools field on the wire. The tool
+    // catalog travels as text in the system prompt; a native tool_use response would
+    // otherwise crash extractContent (no text block) and the half-open state is worse
+    // than no native tools at all.
+    static String buildStructuredRequestBody(String model, LLMRequest request) {
+        JSONObject body = new JSONObject();
+        body.put("model", model);
+        body.put("max_tokens", request.maxTokens());
+        body.put("temperature", request.temperature());
+        body.put("system", request.systemPrompt());
+        JSONArray messages = new JSONArray();
+        for (LLMMessage message : request.messages()) {
+            if (!"system".equals(message.role())) {
+                messages.put(new JSONObject().put("role", message.role()).put("content", message.content()));
+            }
+        }
+        body.put("messages", messages);
+        return body.toString();
+    }
+
     static boolean isErrorStatus(int statusCode) {
         return statusCode >= 300;
     }
@@ -81,6 +122,10 @@ public final class AnthropicProvider implements LLMProvider {
     }
 
     static String extractContent(String responseBody) throws JSONException {
+        return extractReply(responseBody).text();
+    }
+
+    static ProviderReply extractReply(String responseBody) throws JSONException {
         JSONObject json = new JSONObject(responseBody);
         JSONArray content = json.getJSONArray("content");
         StringBuilder sb = new StringBuilder();
@@ -93,7 +138,10 @@ public final class AnthropicProvider implements LLMProvider {
         if (sb.length() == 0) {
             throw new JSONException("no text content block in Anthropic response");
         }
-        return sb.toString();
+        JSONObject usage = json.optJSONObject("usage");
+        return new ProviderReply(sb.toString(),
+                usage == null ? 0 : usage.optInt("input_tokens", 0),
+                usage == null ? 0 : usage.optInt("output_tokens", 0));
     }
 
     static AnalysisResult parseModelOutput(String modelText) {

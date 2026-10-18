@@ -1,0 +1,4 @@
+[INFO] --- spotbugs-maven-plugin:4.8.3.1:check (spotbugs) @ payments ---
+[INFO] BugInstance size is 1
+[ERROR] MojoExecutionException: SpotBugs check found 1 violation: NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE in InvoicePrinter.print at InvoicePrinter.java:14
+[INFO] BUILD FAILURE

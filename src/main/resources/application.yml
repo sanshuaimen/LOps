@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ci-failure-analyzer
+  # Datasource is provided per-environment (tests: Testcontainers).
+  # Flyway runs migrations when a datasource is present.
+  flyway:
+    enabled: true
+
+# P1 explicit assumption: no authentication; trusted network / local use only.
+# Repository roots and flaky history are server-side configuration (P1-6),
+# never taken from request bodies.

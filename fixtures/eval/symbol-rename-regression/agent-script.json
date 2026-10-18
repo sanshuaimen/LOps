@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the compiler names the missing symbol and the call site"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_symbol_search",
+    "arguments": {"symbol": "calcTotal"},
+    "hypothesis": "if calcTotal was renamed, repo-wide search shows callers still using the old name while the declaration is gone"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "Order.calcTotal was renamed to computeTotal in commit 5d81b2f but CheckoutController.java:6 still calls the old name, so compilation fails with 'cannot find symbol: method calcTotal()'",
+    "evidenceIds": ["LOG-002", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "update the call site to order.computeTotal() (or keep a deprecated bridge method)"
+  }
+]

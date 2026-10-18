@@ -1,0 +1,2 @@
+java.net.SocketTimeoutException: Connect timed out
+	at com.example.IntegrationTest.testExternalServiceCall(IntegrationTest.java:22)

@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NoSuchMethodError"},
+    "hypothesis": "the log shows which method is missing and in which module"
+  },
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "NoSuchMethodError on a guava collector usually means conflicting guava versions across modules; check the POMs"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the aggregator mixes guava 29.0-jre (search module) with guava 31.1-jre (core module); the resolved version lacks ImmutableList.toImmutableList, so SearchIndex.load crashes with NoSuchMethodError at runtime",
+    "evidenceIds": ["LOG-002", "DEP-001"],
+    "confidence": 80,
+    "suggestedAction": "align guava to one version in dependencyManagement and rebuild"
+  }
+]

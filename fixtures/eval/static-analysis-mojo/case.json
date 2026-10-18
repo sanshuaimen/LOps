@@ -1,0 +1,7 @@
+{
+  "id": "static-analysis-mojo",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["invoiceprinter"],
+  "evidenceLocators": ["InvoicePrinter.java:14"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

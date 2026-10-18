@@ -1,0 +1,7 @@
+{
+  "id": "surefire-assertion",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["order total"],
+  "evidenceLocators": ["OrderService.java:18"],
+  "relevantTools": ["surefire_report", "source_location"]
+}

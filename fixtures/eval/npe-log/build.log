@@ -1,0 +1,3 @@
+java.lang.NullPointerException: Customer type is null
+	at com.example.UserService.calculateDiscount(UserService.java:9)
+	at com.example.UserServiceTest.testPremiumDiscount(UserServiceTest.java:7)

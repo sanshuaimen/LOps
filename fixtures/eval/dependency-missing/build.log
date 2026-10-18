@@ -1,0 +1,1 @@
+[ERROR] Could not resolve dependencies for project com.example:sample-app:jar:1.0.0: Could not find artifact com.example:pricing-lib:jar:2.3.0 in central
