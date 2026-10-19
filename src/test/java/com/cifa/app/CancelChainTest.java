@@ -62,11 +62,22 @@ class CancelChainTest {
         pool.initialize();
 
         CountDownLatch callStarted = new CountDownLatch(1);
-        LLMProvider blockingProvider = request -> {
-            callStarted.countDown();
-            // interrupted cancel exits here immediately with InterruptedException
-            new CountDownLatch(1).await();
-            throw new IllegalStateException("unreachable");
+        CountDownLatch release = new CountDownLatch(1);
+        // NOTE: a lambda here would implement analyze() (LLMProvider's single abstract
+        // method) and silently never block the loop's invoke() — anonymous class on purpose.
+        LLMProvider blockingProvider = new LLMProvider() {
+            @Override
+            public LLMResponse invoke(LLMRequest request) throws InterruptedException {
+                callStarted.countDown();
+                // interrupting cancel exits here immediately with InterruptedException
+                release.await();
+                throw new IllegalStateException("unreachable");
+            }
+
+            @Override
+            public com.cifa.llm.AnalysisResult analyze(com.cifa.context.AnalysisContext context) {
+                throw new UnsupportedOperationException("agent loop uses invoke()");
+            }
         };
 
         RepoRegistry registry = new RepoRegistry("");
@@ -80,7 +91,11 @@ class CancelChainTest {
 
         String taskId = submissions.submit("agent", "demo-repo", "log");
 
-        awaitStatus(taskId, TaskStatus.RUNNING, 15_000);
+        // the provider being inside invoke() proves the row is RUNNING (markRunning
+        // precedes the model call), without racy status polling
+        assertTrue(callStarted.await(15, java.util.concurrent.TimeUnit.SECONDS),
+                "the agent loop must have entered the (blocking) model call");
+        assertEquals(TaskStatus.RUNNING.name(), taskMapper.selectById(taskId).getStatus());
         assertTrue(submissions.cancel(taskId), "cancel must reach the in-flight future");
 
         awaitStatus(taskId, TaskStatus.CANCELLED, 15_000);
