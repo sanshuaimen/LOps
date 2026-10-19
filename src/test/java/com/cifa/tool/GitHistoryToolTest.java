@@ -91,6 +91,42 @@ class GitHistoryToolTest {
         assertEquals(0, catalog.size());
     }
 
+    @Test
+    void mapsExecutorTimeoutToStructuredTimeoutResult(@TempDir Path repo) throws Exception {
+        initRepo(repo);
+        EvidenceCatalog catalog = new EvidenceCatalog("task-1");
+        GitHistoryTool tool = new GitHistoryTool(catalog,
+                new GitCommandExecutor(repo, java.time.Duration.ofNanos(1), 100));
+
+        ToolResult result = tool.execute(Map.of("path", "Service.java", "operation", "log"));
+
+        assertEquals(ToolStatus.TIMEOUT, result.status());
+        assertTrue(result.message().contains("timed out"), result.message());
+        assertTrue(result.evidenceIds().isEmpty());
+        assertEquals(0, catalog.size());
+    }
+
+    @Test
+    void mapsInterruptToTimeoutAndRestoresFlag(@TempDir Path repo) throws Exception {
+        initRepo(repo);
+        EvidenceCatalog catalog = new EvidenceCatalog("task-1");
+        GitHistoryTool tool = new GitHistoryTool(catalog, new GitCommandExecutor(repo));
+        Thread.currentThread().interrupt();
+        try {
+            ToolResult result = tool.execute(Map.of("path", "Service.java", "operation", "log"));
+
+            assertEquals(ToolStatus.TIMEOUT, result.status());
+            assertTrue(result.message().contains("interrupted"), result.message());
+            assertTrue(result.evidenceIds().isEmpty());
+            assertEquals(0, catalog.size());
+            // the tool re-asserts the flag after waitFor consumed it (conservative
+            // pooled-thread semantics) — a worker interrupt still ends the loop as CANCELLED
+            assertTrue(Thread.interrupted(), "interrupt flag must be restored by the tool");
+        } finally {
+            Thread.interrupted(); // never leak a flag into other tests
+        }
+    }
+
     private static void initRepo(Path repo) throws Exception {
         git(repo, "init", "-q");
         git(repo, "config", "user.email", "test@example.com");

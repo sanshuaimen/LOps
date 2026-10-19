@@ -3,6 +3,7 @@ package com.cifa.tool;
 import com.cifa.llm.ToolSchema;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -69,6 +70,40 @@ class ToolRegistryTest {
         assertThrows(IllegalArgumentException.class, () -> registry.register(new StubTool("tool_a")));
     }
 
+    @Test
+    void skipsTimeoutDeclaringToolWhenBudgetExhausted() {
+        GatedTool tool = new GatedTool("gated", true);
+        ToolRegistry registry = new ToolRegistry().register(tool);
+
+        ToolResult result = registry.invoke("gated", Map.of(), Duration.ZERO);
+
+        assertEquals(ToolStatus.TIMEOUT, result.status());
+        assertTrue(result.message().contains("skipped"), result.message());
+        assertEquals(0, tool.executions, "a budget-gated tool must not be started");
+    }
+
+    @Test
+    void runsNonDeclaringToolRegardlessOfBudget() {
+        GatedTool tool = new GatedTool("inmemory", false);
+        ToolRegistry registry = new ToolRegistry().register(tool);
+
+        ToolResult result = registry.invoke("inmemory", Map.of(), Duration.ofSeconds(-1));
+
+        assertEquals(ToolStatus.OK, result.status());
+        assertEquals(1, tool.executions);
+    }
+
+    @Test
+    void runsTimeoutDeclaringToolWhenBudgetRemains() {
+        GatedTool tool = new GatedTool("gated", true);
+        ToolRegistry registry = new ToolRegistry().register(tool);
+
+        ToolResult result = registry.invoke("gated", Map.of(), Duration.ofMinutes(1));
+
+        assertEquals(ToolStatus.OK, result.status());
+        assertEquals(1, tool.executions);
+    }
+
     private record StubTool(String name) implements InvestigationTool {
         @Override
         public String description() {
@@ -83,6 +118,44 @@ class ToolRegistryTest {
         @Override
         public ToolResult execute(Map<String, Object> arguments) {
             return ToolResult.ok("stub ran", List.of(), 0);
+        }
+    }
+
+    /** Counts executions so tests can prove whether the tool was actually started. */
+    private static final class GatedTool implements InvestigationTool {
+        private final String name;
+        private final boolean declaring;
+        private int executions;
+
+        private GatedTool(String name, boolean declaring) {
+            this.name = name;
+            this.declaring = declaring;
+        }
+
+        @Override
+        public String name() {
+            return name;
+        }
+
+        @Override
+        public String description() {
+            return "gated stub " + name;
+        }
+
+        @Override
+        public ToolSchema schema() {
+            return ToolSchema.object(name, description());
+        }
+
+        @Override
+        public boolean supportsTimeout() {
+            return declaring;
+        }
+
+        @Override
+        public ToolResult execute(Map<String, Object> arguments) {
+            executions++;
+            return ToolResult.ok("ran", List.of(), 0);
         }
     }
 }

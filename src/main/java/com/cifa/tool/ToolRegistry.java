@@ -2,6 +2,7 @@ package com.cifa.tool;
 
 import com.cifa.llm.ToolSchema;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,9 +41,23 @@ public final class ToolRegistry {
     }
 
     public ToolResult invoke(String name, Map<String, Object> arguments) {
+        return invoke(name, arguments, null);
+    }
+
+    /**
+     * Budget-aware invocation. Tools that declare {@link InvestigationTool#supportsTimeout()}
+     * are skipped with a structured TIMEOUT when the caller's remaining wall-clock
+     * budget is already exhausted — starting a subprocess (or any unbounded wait)
+     * with no budget left only guarantees a stop-condition exit one round later.
+     * Non-declaring tools ignore the budget: pure in-memory work needs no gating.
+     */
+    public ToolResult invoke(String name, Map<String, Object> arguments, Duration remainingBudget) {
         InvestigationTool tool = name == null ? null : tools.get(name);
         if (tool == null) {
             return ToolResult.invalidArgument("unknown tool: " + name);
+        }
+        if (remainingBudget != null && remainingBudget.compareTo(Duration.ZERO) <= 0 && tool.supportsTimeout()) {
+            return ToolResult.timeout("tool " + name + " skipped: wall-clock budget exhausted");
         }
         Map<String, Object> safeArguments = arguments == null ? Map.of() : arguments;
         try {

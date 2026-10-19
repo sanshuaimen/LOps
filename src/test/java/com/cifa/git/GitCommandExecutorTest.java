@@ -59,6 +59,20 @@ class GitCommandExecutorTest {
         assertEquals(-1, result.exitCode());
     }
 
+    @Test
+    void interruptsSurfaceAsInterruptedException(@TempDir Path repo) throws Exception {
+        GitCommandExecutor executor = new GitCommandExecutor(repo);
+        Thread.currentThread().interrupt();
+        try {
+            // process.waitFor responds to the pre-set flag by throwing immediately
+            assertThrows(InterruptedException.class, () -> executor.log(Path.of("A.txt"), 1));
+            // waitFor consumed the flag when it threw; the test thread must stay clean
+            assertFalse(Thread.interrupted(), "interrupt flag must be cleared after the throw");
+        } finally {
+            Thread.interrupted(); // defensive: never leak a flag into other tests
+        }
+    }
+
     private static void git(Path repo, String... args) throws Exception {
         List<String> command = new java.util.ArrayList<>();
         command.add("git");

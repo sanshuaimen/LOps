@@ -18,4 +18,14 @@ public interface InvestigationTool {
     ToolSchema schema();
 
     ToolResult execute(Map<String, Object> arguments);
+
+    /**
+     * Whether this tool can stall long enough to be worth budget-gating: the
+     * registry skips declaring tools when the caller's remaining wall-clock
+     * budget is exhausted, instead of starting work that cannot be bounded.
+     * Pure in-memory tools keep the default (false) — there is nothing to gate.
+     */
+    default boolean supportsTimeout() {
+        return false;
+    }
 }

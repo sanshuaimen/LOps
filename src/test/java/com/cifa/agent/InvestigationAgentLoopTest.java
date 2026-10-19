@@ -174,6 +174,50 @@ class InvestigationAgentLoopTest {
     }
 
     @Test
+    void consecutiveToolTimeoutsReachTheSameStopCondition() {
+        // TIMEOUT is a first-class tool failure: subprocess-backed tools that time
+        // out (or are budget-skipped by the registry) must reach the same stop
+        // condition as FAILED results, not just silently burn rounds.
+        catalog = new EvidenceCatalog("task-1");
+        trace = new InMemoryTraceRecorder();
+        EvidenceVerifier verifier = new EvidenceVerifier(catalog, new RepositoryPathPolicy(repo));
+        ToolRegistry tools = new ToolRegistry().register(new InvestigationTool() {
+            @Override
+            public String name() {
+                return "stalling_git";
+            }
+
+            @Override
+            public String description() {
+                return "stands in for a git tool whose subprocess timed out";
+            }
+
+            @Override
+            public ToolSchema schema() {
+                return ToolSchema.object("stalling_git", description());
+            }
+
+            @Override
+            public ToolResult execute(Map<String, Object> arguments) {
+                return ToolResult.timeout("git log timed out after the configured budget");
+            }
+        });
+        FakeLLMProvider provider = new FakeLLMProvider();
+        for (int i = 0; i < 5; i++) {
+            provider.enqueue(AgentDecision.toolCall("stalling_git",
+                    Map.of("path", "A.java", "operation", "log")));
+        }
+        InvestigationAgentLoop loop = new InvestigationAgentLoop(provider, tools, catalog, verifier,
+                trace, InvestigationBudget.defaults(), "task-1", "fake-model");
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop, "investigate");
+
+        assertEquals(AgentStopReason.CONSECUTIVE_TOOL_FAILURES, outcome.stopReason());
+        assertEquals(3, outcome.state().consecutiveToolFailures());
+        assertTrue(trace.events().stream().anyMatch(event -> event.status().equals("timeout")));
+    }
+
+    @Test
     void stopsOnRepeatedCallsWithoutProgress() {
         FakeLLMProvider provider = new FakeLLMProvider(
                 AgentDecision.toolCall("echo", Map.of("finding", "same")),

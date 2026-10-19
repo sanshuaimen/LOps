@@ -89,7 +89,11 @@ public final class InvestigationAgentLoop {
 
                 switch (decision.kind()) {
                     case TOOL_CALL -> {
-                        ToolResult result = tools.invoke(decision.toolName(), decision.arguments());
+                        // Subprocess-backed tools are skipped when the wall-clock
+                        // budget is already gone (registry gates on supportsTimeout);
+                        // pure in-memory tools run regardless — they cannot stall.
+                        ToolResult result = tools.invoke(decision.toolName(), decision.arguments(),
+                                budget.maxWallClock().minus(state.elapsed()));
                         boolean repeated = state.recordToolCall(state.round(), decision.toolName(),
                                 decision.arguments(), result.status().name(), catalog.size(), decision.hypothesis());
                         state.recordToolOutcome(result.status().name());

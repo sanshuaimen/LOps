@@ -47,6 +47,12 @@ public final class GitHistoryTool implements InvestigationTool {
         return NAME;
     }
 
+    /** Backs onto git subprocesses (bounded by the executor's own timeout) — the one tool worth gating. */
+    @Override
+    public boolean supportsTimeout() {
+        return true;
+    }
+
     @Override
     public String description() {
         return "Inspect repository history for a file: recent commits (log), per-line attribution (blame), "
