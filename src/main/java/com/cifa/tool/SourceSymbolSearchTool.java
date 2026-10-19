@@ -108,7 +108,9 @@ public final class SourceSymbolSearchTool implements InvestigationTool {
 
         try (Stream<Path> walk = Files.walk(paths.root(), MAX_WALK_DEPTH)) {
             List<Path> candidates = walk
-                    .filter(Files::isRegularFile)
+                    // NOFOLLOW: a symlinked file inside the repo (evil.java -> /etc/hosts)
+                    // must not be read into the model context; walk paths bypass the policy
+                    .filter(path -> Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS))
                     .filter(path -> !isSkipped(paths.root().relativize(path)))
                     .filter(path -> hasScannedExtension(path.getFileName().toString()))
                     .limit(MAX_SCANNED_FILES)

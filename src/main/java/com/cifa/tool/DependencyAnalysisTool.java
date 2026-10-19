@@ -170,7 +170,9 @@ public final class DependencyAnalysisTool implements InvestigationTool {
     private List<Path> findPoms(Path root) throws IOException {
         try (Stream<Path> walk = Files.walk(root, MAX_WALK_DEPTH)) {
             return walk
-                    .filter(Files::isRegularFile)
+                    // NOFOLLOW: walk paths bypass the policy's symlink checks, so a
+                    // pom.xml symlink pointing outside the repo must not be parsed
+                    .filter(path -> Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS))
                     .filter(path -> path.getFileName().toString().equals("pom.xml"))
                     .filter(path -> !path.toString().contains("/.git/"))
                     .limit(MAX_MODULES)
