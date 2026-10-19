@@ -12,6 +12,11 @@ import java.util.List;
 
 public final class ContextBuilder {
 
+    /** The failure message flows into every prompt verbatim; a 2MB single log line
+     * matched by the exception regex must not become a 2MB prompt section. */
+    private static final int MAX_MESSAGE_CHARS = 2000;
+    private static final int MAX_FAILING_TESTS = 20;
+
     private ContextBuilder() {
     }
 
@@ -47,10 +52,22 @@ public final class ContextBuilder {
             diffHunk = diffHunk.substring(0, budget.maxDiffChars());
         }
 
+        String message = classified.failure().message();
+        if (message.length() > MAX_MESSAGE_CHARS) {
+            excluded.add("failure message truncated from " + message.length() + " to " + MAX_MESSAGE_CHARS + " chars");
+            message = message.substring(0, MAX_MESSAGE_CHARS);
+        }
+
+        List<String> failingTests = classified.failure().failingTests();
+        if (failingTests.size() > MAX_FAILING_TESTS) {
+            excluded.add("failing tests truncated from " + failingTests.size() + " to " + MAX_FAILING_TESTS);
+            failingTests = failingTests.subList(0, MAX_FAILING_TESTS);
+        }
+
         return new AnalysisContext(
                 classified.failure().exceptionType(),
-                classified.failure().message(),
-                classified.failure().failingTests(),
+                message,
+                failingTests,
                 topFrames,
                 snippet,
                 diffHunk,

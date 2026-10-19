@@ -33,6 +33,57 @@ class StructuredLLMProviderTest {
     }
 
     @Test
+    void emptyAndBlankInputsAreUnparseableNotSilent() {
+        assertThrows(org.json.JSONException.class, () -> AgentDecision.fromJson(""));
+        assertThrows(org.json.JSONException.class, () -> AgentDecision.fromJson("   \n\t  "));
+        assertThrows(org.json.JSONException.class, () -> AgentDecision.fromJson(null));
+    }
+
+    @Test
+    void unknownTypeValueIsUnparseableRatherThanASilentSubmit() {
+        // a mistyped decision must become a bounded retry (unparseable_output),
+        // never a conclusion candidate with defaulted fields
+        org.json.JSONException e = assertThrows(org.json.JSONException.class,
+                () -> AgentDecision.fromJson(
+                        "{\"type\":\"banana\",\"category\":\"LOGIC_ERROR\",\"rootCause\":\"x\",\"evidenceIds\":[],\"confidence\":90}"));
+        assertTrue(e.getMessage().contains("banana"), e.getMessage());
+    }
+
+    @Test
+    void missingTypeKeepsTheLegacyLenientSubmitDefault() {
+        // pinned on purpose: type-less JSON (baseline-era format) stays a submit
+        AgentDecision decision = AgentDecision.fromJson(
+                "{\"category\":\"LOGIC_ERROR\",\"rootCause\":\"null guard\",\"confidence\":40}");
+        assertEquals(AgentDecision.Kind.SUBMIT, decision.kind());
+        assertEquals("LOGIC_ERROR", decision.category());
+    }
+
+    @Test
+    void nonStringEvidenceIdElementIsUnparseable() {
+        assertThrows(org.json.JSONException.class, () -> AgentDecision.fromJson(
+                "{\"type\":\"submit\",\"evidenceIds\":[{\"id\":\"SRC-001\"}]}"));
+    }
+
+    @Test
+    void deeplyNestedJsonIsRejectedBeforeRecursiveParsing() {
+        // org.json 20240303 has NO depth guard: deep enough input would end in
+        // StackOverflowError, an Error no catch in the loop can hold. fromJson
+        // must reject over-nested candidates before parsing them.
+        StringBuilder deep = new StringBuilder("{\"type\":\"submit\",\"rootCause\":");
+        for (int i = 0; i < 100; i++) {
+            deep.append("{\"a\":");
+        }
+        deep.append('1');
+        for (int i = 0; i < 100; i++) {
+            deep.append('}');
+        }
+        deep.append('}');
+        org.json.JSONException e = assertThrows(org.json.JSONException.class,
+                () -> AgentDecision.fromJson(deep.toString()));
+        assertTrue(e.getMessage().contains("nesting deeper"), e.getMessage());
+    }
+
+    @Test
     void fakeProviderQueuesStructuredResponsesAndRecordsRequests() throws Exception {
         FakeLLMProvider fake = new FakeLLMProvider()
                 .enqueue(AgentDecision.toolCall("dependency_analysis", Map.of("module", "app"), "check dependencies"))

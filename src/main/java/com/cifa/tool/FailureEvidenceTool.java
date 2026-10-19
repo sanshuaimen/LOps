@@ -21,6 +21,8 @@ public final class FailureEvidenceTool implements InvestigationTool {
     public static final String NAME = "failure_evidence";
     private static final int MAX_MATCH_LINES = 100;
     private static final int MAX_LOG_LINES = 20_000;
+    /** Same budget as SurefireReportTool's content cap. */
+    private static final int MAX_EVIDENCE_CHARS = 8000;
 
     private final EvidenceCatalog catalog;
     private final String[] logLines;
@@ -111,6 +113,11 @@ public final class FailureEvidenceTool implements InvestigationTool {
         }
 
         String content = String.join("\n", matched);
+        // MAX_MATCH_LINES bounds the line count, not the bytes: one multi-MB log line
+        // matched by a broad keyword would otherwise become an unbounded evidence entry.
+        if (content.length() > MAX_EVIDENCE_CHARS) {
+            content = content.substring(0, MAX_EVIDENCE_CHARS) + "\n...[truncated]";
+        }
         Evidence evidence = catalog.register(EvidenceType.LOG, "normalized_log:" + firstMatchedLine + "-" + lastMatchedLine,
                 content, NAME, firstMatchedLine, lastMatchedLine, "");
         return ToolResult.ok(content, List.of(evidence.id()), 0);

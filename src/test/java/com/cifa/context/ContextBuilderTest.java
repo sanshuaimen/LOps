@@ -52,6 +52,25 @@ class ContextBuilderTest {
     }
 
     @Test
+    void truncatesOversizedMessageAndFailingTests() {
+        // a multi-MB single log line captured by the exception regex must not
+        // flow verbatim into prompts: message and failing tests are capped too
+        ParsedFailure failure = new ParsedFailure("java.lang.OutOfMemoryError",
+                "x".repeat(5000),
+                List.of(),
+                java.util.Collections.nCopies(60, "com.example.SomeTest.someMethod"),
+                "");
+        ClassifiedFailure classified = new ClassifiedFailure(failure, FailureCategory.INFRA_FLAKY);
+
+        AnalysisContext context = ContextBuilder.build(classified, null, "");
+
+        assertEquals(2000, context.message().length());
+        assertEquals(20, context.failingTests().size());
+        assertTrue(context.excludedNotes().stream().anyMatch(n -> n.contains("failure message truncated")));
+        assertTrue(context.excludedNotes().stream().anyMatch(n -> n.contains("failing tests truncated from 60 to 20")));
+    }
+
+    @Test
     void readSourceSnippetReturnsWindowAroundLine(@TempDir Path tempDir) throws IOException {
         Path file = tempDir.resolve("Sample.java");
         StringBuilder content = new StringBuilder();

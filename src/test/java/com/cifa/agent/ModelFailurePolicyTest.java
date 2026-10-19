@@ -106,6 +106,21 @@ class ModelFailurePolicyTest {
     }
 
     @Test
+    void emptyModelContentTakesTheUnparseablePathToModelFailure() {
+        FakeLLMProvider provider = new FakeLLMProvider();
+        provider.enqueueRaw("");
+        provider.enqueueRaw("   ");
+        provider.enqueueRaw("");
+        InvestigationAgentLoop loop = loop(provider);
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop);
+
+        assertEquals(AgentStopReason.MODEL_FAILURE, outcome.stopReason());
+        assertNull(outcome.diagnosis());
+        assertEquals(3, provider.requests().size());
+    }
+
+    @Test
     void rateLimitFailuresExhaustIntoACategorizedModelFailure() {
         // RateLimitedException is an IOException subclass, so the retry count is
         // unchanged — what's new is the category travelling through the trace.

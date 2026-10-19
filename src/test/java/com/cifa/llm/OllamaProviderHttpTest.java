@@ -1,5 +1,7 @@
 package com.cifa.llm;
 
+import com.cifa.classification.FailureCategory;
+import com.cifa.context.AnalysisContext;
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -79,6 +82,41 @@ class OllamaProviderHttpTest {
 
         assertFalse(e instanceof RateLimitedException);
         assertTrue(e.getMessage().contains("500"), e.getMessage());
+    }
+
+    @Test
+    void emptyMessageContentIsUnparseableOnInvoke() throws Exception {
+        OllamaProvider provider = startServer(Duration.ofSeconds(5));
+        respondWith(200, "{\"message\": {\"content\": \"\"}}");
+
+        // empty content → LLMResponse.parse("") → JSONException: the bounded-retry
+        // path, never a silent success with an empty decision
+        assertThrows(org.json.JSONException.class, () -> provider.invoke(REQUEST));
+    }
+
+    @Test
+    void analyzeRetriesWithStrictPromptThenFallsBackToRawText() throws Exception {
+        OllamaProvider provider = startServer(Duration.ofSeconds(5));
+        AtomicInteger calls = new AtomicInteger();
+        server.createContext("/api/chat", exchange -> {
+            calls.incrementAndGet();
+            // valid chat envelope, but the model content itself is not the JSON contract
+            byte[] bytes = "{\"message\": {\"content\": \"this is not json at all\"}}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, bytes.length);
+            try (OutputStream out = exchange.getResponseBody()) {
+                out.write(bytes);
+            }
+        });
+        AnalysisContext context = new AnalysisContext(
+                "java.lang.NullPointerException", "msg", List.of(), List.of(),
+                "", "", FailureCategory.LOGIC_ERROR, List.of());
+
+        AnalysisResult result = provider.analyze(context);
+
+        assertEquals(2, calls.get(), "one initial call + one strict-prompt retry");
+        assertTrue(result.rootCause().contains("did not return valid JSON"), result.rootCause());
+        assertEquals(0, result.confidence());
+        assertTrue(result.suggestedFix().contains("this is not json at all"));
     }
 
     @Test

@@ -69,4 +69,20 @@ class FailureEvidenceToolTest {
         assertEquals(ToolStatus.INVALID_ARGUMENT, tool.execute(Map.of("startLine", 0)).status());
         assertEquals(ToolStatus.INVALID_ARGUMENT, tool.execute(Map.of("startLine", 5, "endLine", 2)).status());
     }
+
+    @Test
+    void capsEvidenceContentOnHugeSingleLine() {
+        // MAX_MATCH_LINES bounds the line count, not the bytes — one multi-MB line
+        // matched by a broad keyword must not become an unbounded evidence entry
+        String hugeLine = "[ERROR] " + "x".repeat(20_000);
+        EvidenceCatalog catalog = new EvidenceCatalog("task-1");
+        FailureEvidenceTool tool = new FailureEvidenceTool(catalog, hugeLine);
+
+        ToolResult result = tool.execute(Map.of("keyword", "ERROR"));
+
+        assertEquals(ToolStatus.OK, result.status());
+        assertTrue(result.message().length() <= 8100,
+                "evidence must be char-capped, got " + result.message().length());
+        assertTrue(result.message().endsWith("...[truncated]"));
+    }
 }

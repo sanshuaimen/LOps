@@ -41,15 +41,21 @@ class InvestigationAgentLoopTest {
 
     /** A minimal controlled tool: registers one SOURCE-style evidence per call. */
     private static final class EchoTool implements InvestigationTool {
+        private final String name;
         private final EvidenceCatalog catalog;
 
         private EchoTool(EvidenceCatalog catalog) {
+            this("echo", catalog);
+        }
+
+        private EchoTool(String name, EvidenceCatalog catalog) {
+            this.name = name;
             this.catalog = catalog;
         }
 
         @Override
         public String name() {
-            return "echo";
+            return name;
         }
 
         @Override
@@ -59,7 +65,7 @@ class InvestigationAgentLoopTest {
 
         @Override
         public ToolSchema schema() {
-            return ToolSchema.object("echo", description());
+            return ToolSchema.object(name, description());
         }
 
         @Override
@@ -69,7 +75,7 @@ class InvestigationAgentLoopTest {
                 return ToolResult.failed("injected failure");
             }
             var evidence = catalog.register(EvidenceType.LOG, "normalized_log:1-2", finding,
-                    "echo", 1, 2, "");
+                    name, 1, 2, "");
             return ToolResult.ok(finding, List.of(evidence.id()), 0);
         }
     }
@@ -230,6 +236,70 @@ class InvestigationAgentLoopTest {
         assertEquals(AgentStopReason.NO_PROGRESS, outcome.stopReason());
         assertTrue(trace.events().stream()
                 .anyMatch(event -> event.stopReason().contains("repeat-without-progress")));
+    }
+
+    @Test
+    void firstRepeatWarnsTheModelBeforeTheSecondStops() {
+        // threshold boundary: repeat #1 feeds the warning back and continues,
+        // repeat #2 (the configured max) stops the investigation
+        FakeLLMProvider provider = new FakeLLMProvider();
+        provider.enqueue(AgentDecision.toolCall("echo", Map.of("finding", "same")));
+        provider.enqueue(AgentDecision.toolCall("echo", Map.of("finding", "same")));
+        provider.enqueue(AgentDecision.toolCall("echo", Map.of("finding", "same")));
+        InvestigationAgentLoop loop = loop(provider, InvestigationBudget.defaults());
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop, "investigate");
+
+        assertEquals(AgentStopReason.NO_PROGRESS, outcome.stopReason());
+        assertEquals(3, provider.requests().size());
+        assertTrue(provider.requests().get(2).messages().stream()
+                        .anyMatch(message -> message.content().contains("[warning] identical call")),
+                "the no-progress warning must reach the model before the stop");
+    }
+
+    @Test
+    void alternatingDistinctCallsAreNotNoProgressUntilMaxRounds() {
+        // known limitation, pinned: the repeat detector is same-tool-same-args only,
+        // so ever-different arguments are bounded by MAX_ROUNDS, not NO_PROGRESS
+        FakeLLMProvider provider = new FakeLLMProvider();
+        for (int i = 0; i < 8; i++) {
+            provider.enqueue(AgentDecision.toolCall("echo", Map.of("finding", "run " + i)));
+        }
+        InvestigationAgentLoop loop = loop(provider, InvestigationBudget.defaults());
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop, "investigate");
+
+        assertEquals(AgentStopReason.MAX_ROUNDS, outcome.stopReason());
+        assertEquals(0, outcome.state().repeatsWithoutProgress());
+    }
+
+    @Test
+    void sameArgumentsUnderDifferentToolsAreNotRepeats() {
+        // the signature includes the tool name: tool_b(same) directly after
+        // tool_a(same) is a fresh call, not a repeat
+        FakeLLMProvider provider = new FakeLLMProvider();
+        provider.enqueue(AgentDecision.toolCall("tool_a", Map.of("finding", "same")));
+        provider.enqueue(AgentDecision.toolCall("tool_b", Map.of("finding", "same")));
+        provider.enqueue(AgentDecision.unknown("done"));
+        EvidenceCatalog sameArgsCatalog = new EvidenceCatalog("task-1");
+        InMemoryTraceRecorder sameArgsTrace = new InMemoryTraceRecorder();
+        EvidenceVerifier verifier = new EvidenceVerifier(sameArgsCatalog, new RepositoryPathPolicy(repo));
+        ToolRegistry tools = new ToolRegistry()
+                .register(new EchoTool("tool_a", sameArgsCatalog))
+                .register(new EchoTool("tool_b", sameArgsCatalog));
+        InvestigationAgentLoop loop = new InvestigationAgentLoop(provider, tools, sameArgsCatalog,
+                verifier, sameArgsTrace, InvestigationBudget.defaults(), "task-1", "fake-model");
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop, "investigate");
+
+        assertEquals(AgentStopReason.INSUFFICIENT_EVIDENCE, outcome.stopReason());
+        assertEquals(0, outcome.state().repeatsWithoutProgress());
+        assertTrue(noRepeatWarnings(sameArgsTrace));
+    }
+
+    private static boolean noRepeatWarnings(InMemoryTraceRecorder recorder) {
+        return recorder.events().stream()
+                .noneMatch(event -> event.stopReason().contains("repeat-without-progress"));
     }
 
     @Test

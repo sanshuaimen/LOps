@@ -22,6 +22,37 @@ public record AgentDecision(
 ) {
     public enum Kind { TOOL_CALL, SUBMIT, UNKNOWN }
 
+    private static final int MAX_NESTING_DEPTH = 64;
+
+    /** Linear scan, string-aware (braces inside quoted text don't count): bounds
+     * recursive descent before org.json parses a single character. */
+    private static int nestingDepth(String json) {
+        int max = 0;
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = 0; i < json.length(); i++) {
+            char c = json.charAt(i);
+            if (inString) {
+                if (escaped) {
+                    escaped = false;
+                } else if (c == '\\') {
+                    escaped = true;
+                } else if (c == '"') {
+                    inString = false;
+                }
+                continue;
+            }
+            switch (c) {
+                case '"' -> inString = true;
+                case '{', '[' -> max = Math.max(max, ++depth);
+                case '}', ']' -> depth--;
+                default -> { }
+            }
+        }
+        return max;
+    }
+
     public AgentDecision {
         hypothesis = hypothesis == null ? "" : hypothesis;
         toolName = toolName == null ? "" : toolName;
@@ -98,7 +129,13 @@ public record AgentDecision(
         if (start < 0 || end < start) {
             throw new JSONException("no decision JSON object found");
         }
-        JSONObject json = new JSONObject(trimmed.substring(start, end + 1));
+        String candidate = trimmed.substring(start, end + 1);
+        if (nestingDepth(candidate) > MAX_NESTING_DEPTH) {
+            // org.json (20240303) has no depth limit: pathological model output would
+            // recurse until StackOverflowError, an Error no catch in the loop can hold
+            throw new JSONException("decision JSON nesting deeper than " + MAX_NESTING_DEPTH);
+        }
+        JSONObject json = new JSONObject(candidate);
         String type = json.optString("type", json.optString("action", "submit"))
                 .toLowerCase(java.util.Locale.ROOT);
         if (type.equals("tool") || type.equals("tool_call") || type.equals("call_tool")) {
@@ -127,6 +164,11 @@ public record AgentDecision(
         String action = json.optString("suggestedAction", json.optString("suggestedFix", ""));
         if (type.equals("unknown") || type.equals("insufficient_evidence")) {
             return unknown(rootCause, evidence);
+        }
+        if (!type.equals("submit")) {
+            // A mistyped decision must not silently become a conclusion candidate:
+            // unknown types are unparseable output (bounded retry), not lenient submits.
+            throw new JSONException("unknown decision type: " + type);
         }
         return submit(category, rootCause, evidence, json.optInt("confidence", 0), action);
     }
