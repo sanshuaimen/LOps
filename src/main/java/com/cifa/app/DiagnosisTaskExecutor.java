@@ -69,7 +69,17 @@ public class DiagnosisTaskExecutor {
                     ? runBaseline(task, request, llm)
                     : runAgent(task, request, llm, modelName);
         } catch (InterruptedException cancelled) {
-            Thread.currentThread().interrupt();
+            // Consume the pending interrupt instead of re-asserting it. The cancel
+            // has been fully translated into CANCELLED and nothing above this frame
+            // reads the flag (the FutureTask is already INTERRUPTED; the pool worker
+            // tolerates spurious wakeups). Re-asserting it would arm HikariCP's
+            // blocking acquisition path — ConcurrentBag falls through to a
+            // SynchronousQueue.poll when another borrower holds the pool's only free
+            // connection, and that poll throws immediately on a set flag, dropping
+            // this CANCELLED persist (the "Could not open JDBC Connection for
+            // transaction" flake that CancelChainTest chased down). Consuming also
+            // leaves the FAILED persist below running with a clean flag.
+            Thread.interrupted();
             store.persistOutcome(task, TaskStatus.CANCELLED, null, "", "CANCELLED",
                     "cancelled before completion", List.of(), null);
             return TaskStatus.CANCELLED;
