@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "Connection refused"},
+    "hypothesis": "the log shows the direct connection failure and which project frame hit it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.notify.AlertDispatchClientTest.opensDispatchSocket"},
+    "hypothesis": "a refused dispatch port is an environment availability candidate; the independent history decides between flakiness and a code regression"
+  },
+  {
+    "type": "submit",
+    "category": "INFRA_FLAKY",
+    "rootCause": "the dispatch socket connect is refused intermittently; the independent history shows repeated failures that recover on rerun with no related code change, so this is environment/upstream availability, not a regression",
+    "evidenceIds": ["LOG-002", "FLAKY-001"],
+    "confidence": 72,
+    "suggestedAction": "add retry-with-backoff against the dispatch service and keep the test flagged environment-sensitive"
+  }
+]

@@ -1,0 +1,6 @@
+[INFO] --- maven-compiler-plugin:3.13.0:testCompile @ cart ---
+[ERROR] /home/ci/work/cart/src/test/java/com/example/cart/CartTest.java:[12,21] cannot find symbol
+[ERROR]   symbol:   variable checkoutTotal
+[ERROR]   location: class com.example.cart.CartTest
+[INFO] 1 error
+[INFO] BUILD FAILURE

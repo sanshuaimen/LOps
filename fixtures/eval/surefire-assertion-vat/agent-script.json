@@ -1,0 +1,28 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "FAILURE"},
+    "hypothesis": "the console only shows which test failed; the assertion detail must be elsewhere"
+  },
+  {
+    "type": "tool_call",
+    "tool": "surefire_report",
+    "arguments": {},
+    "hypothesis": "the surefire XML holds the assertion message and the exact production frame the console log omits"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/orders/OrderMapper.java", "startLine": 12, "endLine": 17},
+    "hypothesis": "the frame points at the vat_id mapping line; compare it with the guarded address mapping above"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "OrderMapper.map guards the address placeholder but maps vat_id as order.vatId() == null ? null : order.vatId().strip(); an order without vatId produces a null cell instead of the placeholder the test asserts",
+    "evidenceIds": ["LOG-002", "TEST-001", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "map a '(no vat id)' placeholder for null vatId, symmetric with the address handling"
+  }
+]

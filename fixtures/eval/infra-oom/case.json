@@ -1,0 +1,7 @@
+{
+  "id": "infra-oom",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["heap space"],
+  "evidenceLocators": ["OutOfMemoryError"],
+  "relevantTools": ["failure_evidence"]
+}

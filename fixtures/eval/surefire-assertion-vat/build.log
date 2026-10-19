@@ -1,0 +1,4 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ orders ---
+[ERROR] Tests run: 3, Failures: 1, Errors: 0
+[ERROR] OrderMapperTest.mapsNullAddressToPlaceholder  Time elapsed: 0.02 s  <<< FAILURE!
+[INFO] BUILD FAILURE

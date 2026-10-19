@@ -1,0 +1,6 @@
+[INFO] --- maven-compiler-plugin:3.13.0:compile @ payments ---
+[ERROR] /home/ci/work/payments/src/main/java/com/example/payments/PaymentGateway.java:[15,28] cannot find symbol
+[ERROR]   symbol:   method formatAmount(java.math.BigDecimal)
+[ERROR]   location: variable formatter of type com.example.money.AmountFormatter
+[INFO] 1 error
+[INFO] BUILD FAILURE

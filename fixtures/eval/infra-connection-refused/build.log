@@ -1,0 +1,8 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ notify ---
+[ERROR] Tests run: 6, Failures: 0, Errors: 1
+[ERROR] AlertDispatchClientTest.opensDispatchSocket  Time elapsed: 0.4 s  <<< ERROR!
+java.net.ConnectException: Connection refused (Connection refused)
+	at java.base/java.net.PlainSocketImpl.socketConnect(Native Method)
+	at com.example.notify.AlertDispatchClient.open(AlertDispatchClient.java:17)
+	at com.example.notify.AlertDispatchClientTest.opensDispatchSocket(AlertDispatchClientTest.java:12)
+[INFO] BUILD FAILURE

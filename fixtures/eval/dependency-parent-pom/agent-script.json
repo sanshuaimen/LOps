@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "Non-resolvable"},
+    "hypothesis": "the reactor error names the parent coordinate that cannot be resolved"
+  },
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "the module's own pom shows the parent declaration; the fix is a build-graph change, not a code change"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "billing-service declares parent com.example:app-parent:1.0.0, which is no longer resolvable from the configured repositories, so the Maven reactor aborts before compiling anything",
+    "evidenceIds": ["LOG-002", "DEP-001"],
+    "confidence": 76,
+    "suggestedAction": "reparent onto app-parent 1.1.x or inline the parent's plugin/dependency management"
+  }
+]

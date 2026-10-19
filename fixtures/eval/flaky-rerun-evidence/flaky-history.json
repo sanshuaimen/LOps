@@ -1,0 +1,12 @@
+{
+  "com.example.search.IndexRefresherTest.refreshAfterBulkImport": [
+    {"build": "b-3110", "passed": true},
+    {"build": "b-3111", "passed": true},
+    {"build": "b-3112", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-3113", "passed": true},
+    {"build": "b-3114", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-3115", "passed": true},
+    {"build": "b-3116", "passed": true},
+    {"build": "b-3117", "passed": false, "rerunPassed": true, "relatedCommit": ""}
+  ]
+}

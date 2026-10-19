@@ -1,0 +1,5 @@
+[INFO] --- maven-compiler-plugin:3.13.0:compile @ billing ---
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project billing: Compilation failure
+[ERROR] /home/ci/work/billing/src/main/java/com/example/billing/InvoiceExporter.java:[5,8] package com.example.pricing.api does not exist
+[INFO] 1 error
+[INFO] BUILD FAILURE

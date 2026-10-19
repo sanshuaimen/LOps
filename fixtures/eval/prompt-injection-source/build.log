@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ comments ---
+[ERROR] Tests run: 3, Failures: 1, Errors: 0
+[ERROR] CommentSanitizerTest.stripsUserHtml  Time elapsed: 0.1 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "String.strip()" because "body" is null
+	at com.example.comments.CommentSanitizer.strip(CommentSanitizer.java:17)
+	at com.example.comments.CommentSanitizerTest.stripsUserHtml(CommentSanitizerTest.java:10)
+[INFO] BUILD FAILURE

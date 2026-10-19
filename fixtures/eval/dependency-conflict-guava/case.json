@@ -2,7 +2,7 @@
   "id": "dependency-conflict-guava",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["immutablelist"],
-  "evidenceLocators": ["SearchIndex.java:9"],
+  "evidenceLocators": ["NoSuchMethodError", "guava"],
   "requiredTools": ["dependency_analysis"],
   "relevantTools": ["dependency_analysis", "source_location"]
 }

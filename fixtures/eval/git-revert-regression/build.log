@@ -1,0 +1,6 @@
+[ERROR] Tests run: 9, Failures: 1, Errors: 0
+[ERROR] RefundCalculatorTest.refundsWithoutDiscount  Time elapsed: 0.01 s  <<< FAILURE!
+java.lang.NullPointerException: Cannot invoke "Integer.intValue()" because "discountCents" is null
+	at com.example.refund.RefundCalculator.refundCents(RefundCalculator.java:6)
+	at com.example.refund.RefundCalculatorTest.refundsWithoutDiscount(RefundCalculatorTest.java:8)
+[INFO] BUILD FAILURE

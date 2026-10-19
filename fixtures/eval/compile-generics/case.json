@@ -1,0 +1,7 @@
+{
+  "id": "compile-generics",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["incompatible types"],
+  "evidenceLocators": ["incompatible types", "StockAggregator.java"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

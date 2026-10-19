@@ -1,0 +1,7 @@
+{
+  "id": "infra-disk-full",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["space left"],
+  "evidenceLocators": ["no space left on device"],
+  "relevantTools": ["failure_evidence"]
+}

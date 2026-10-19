@@ -1,0 +1,7 @@
+{
+  "id": "surefire-assertion-vat",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["vat"],
+  "evidenceLocators": ["expected mapped vat placeholder", "OrderMapper.java"],
+  "relevantTools": ["surefire_report", "source_location", "failure_evidence"]
+}

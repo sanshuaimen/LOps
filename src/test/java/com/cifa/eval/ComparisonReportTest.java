@@ -17,6 +17,8 @@ class ComparisonReportTest {
 
     private static final Path GIT_FIXTURE =
             Path.of("fixtures/eval/git-regression-checkout/repo");
+    private static final Path REVERT_FIXTURE =
+            Path.of("fixtures/eval/git-revert-regression/repo");
     private static final String CHECKOUT_SAFE = """
             package com.example.checkout;
 
@@ -72,6 +74,52 @@ class ComparisonReportTest {
             }
             """;
 
+    // git-revert-regression: the guard from the fix commit exists only in the
+    // middle of history — HEAD is the accidental revert, whose line 6 unboxes a
+    // null discountCents (the frame the case's build.log cites).
+    private static final String REVERT_REGRESSED = """
+            package com.example.refund;
+
+            public class RefundCalculator {
+
+                public int refundCents(int paidCents, Integer discountCents) {
+                    int base = paidCents - discountCents;
+                    if (base < 0) {
+                        throw new IllegalArgumentException("refund exceeds paid amount");
+                    }
+                    return base;
+                }
+            }
+            """;
+    private static final String REVERT_SAFE = """
+            package com.example.refund;
+
+            public class RefundCalculator {
+
+                public int refundCents(int paidCents, Integer discountCents) {
+                    int discount = discountCents == null ? 0 : discountCents;
+                    int base = paidCents - discount;
+                    if (base < 0) {
+                        throw new IllegalArgumentException("refund exceeds paid amount");
+                    }
+                    return base;
+                }
+            }
+            """;
+    private static final String REVERT_TEST = """
+            package com.example.refund;
+
+            public class RefundCalculatorTest {
+
+                public void refundsWithoutDiscount() {
+                    RefundCalculator calculator = new RefundCalculator();
+                    if (calculator.refundCents(5000, null) != 5000) {
+                        throw new AssertionError("expected full refund when no discount");
+                    }
+                }
+            }
+            """;
+
     /**
      * The whole fixture repo is GENERATED (gitignored: git refuses to track
      * files inside a nested repository): sources, tests and the two-commit
@@ -80,6 +128,11 @@ class ComparisonReportTest {
      */
     @org.junit.jupiter.api.BeforeAll
     static void materializeGitHistoryFixture() throws Exception {
+        materializeCheckoutFixture();
+        materializeRevertFixture();
+    }
+
+    private static void materializeCheckoutFixture() throws Exception {
         if (Files.exists(GIT_FIXTURE.resolve("src/main/java/com/example/checkout/CheckoutService.java"))) {
             return;
         }
@@ -97,6 +150,30 @@ class ComparisonReportTest {
         Files.writeString(service, CHECKOUT_REGRESSED);
         exec(GIT_FIXTURE, "git", "add", "-A");
         exec(GIT_FIXTURE, "git", "commit", "-qm", "remove default tax table (a7f3c21)");
+    }
+
+    /** Three commits on purpose: HEAD is an accidental revert of the fix, which is the regression. */
+    private static void materializeRevertFixture() throws Exception {
+        if (Files.exists(REVERT_FIXTURE.resolve("src/main/java/com/example/refund/RefundCalculator.java"))) {
+            return;
+        }
+        Path calculator = REVERT_FIXTURE.resolve("src/main/java/com/example/refund/RefundCalculator.java");
+        Path calculatorTest = REVERT_FIXTURE.resolve("src/test/java/com/example/refund/RefundCalculatorTest.java");
+        Files.createDirectories(calculator.getParent());
+        Files.createDirectories(calculatorTest.getParent());
+        Files.writeString(calculatorTest, REVERT_TEST);
+        exec(REVERT_FIXTURE, "git", "init", "-q");
+        exec(REVERT_FIXTURE, "git", "config", "user.email", "ci@example.com");
+        exec(REVERT_FIXTURE, "git", "config", "user.name", "CI Fixture");
+        Files.writeString(calculator, REVERT_REGRESSED);
+        exec(REVERT_FIXTURE, "git", "add", "-A");
+        exec(REVERT_FIXTURE, "git", "commit", "-qm", "initial: refunds require an explicit discount");
+        Files.writeString(calculator, REVERT_SAFE);
+        exec(REVERT_FIXTURE, "git", "add", "-A");
+        exec(REVERT_FIXTURE, "git", "commit", "-qm", "fix: default missing discount to zero (4d9e112)");
+        Files.writeString(calculator, REVERT_REGRESSED);
+        exec(REVERT_FIXTURE, "git", "add", "-A");
+        exec(REVERT_FIXTURE, "git", "commit", "-qm", "Revert \"fix: default missing discount to zero (4d9e112)\"");
     }
 
     private static void exec(Path cwd, String... command) throws Exception {

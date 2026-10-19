@@ -1,0 +1,5 @@
+[INFO] --- maven-jar-plugin:3.4.1:jar @ report-export ---
+[INFO] Building jar: /home/ci/work/report-export/target/report-export-1.0.0.jar
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-jar-plugin:3.4.1:jar (default-jar) on project report-export: Error assembling JAR: /home/ci/work/report-export/target/report-export-1.0.0.jar: No space left on device -> [Help 1]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[INFO] BUILD FAILURE

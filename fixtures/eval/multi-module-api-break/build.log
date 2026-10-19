@@ -1,0 +1,9 @@
+2026-10-17T10:02:11.1234567Z ##[group]Run mvn -B verify
+2026-10-17T10:02:40.2003311Z [INFO] Scanning for projects...
+2026-10-17T10:04:30.5551234Z [INFO] --- maven-surefire-plugin:3.2.5:test @ orders-web ---
+2026-10-17T10:04:31.0102030Z [ERROR] OrdersControllerTest.placeOrder  Time elapsed: 0.3 s  <<< ERROR!
+2026-10-17T10:04:31.0104112Z java.lang.NoSuchMethodError: 'java.math.BigDecimal com.example.pricing.PriceQuotes.quote(com.example.orders.Order)'
+2026-10-17T10:04:31.0105543Z 	at com.example.orders.OrdersController.total(OrdersController.java:22)
+2026-10-17T10:04:31.0108899Z 	at com.example.orders.OrdersControllerTest.placeOrder(OrdersControllerTest.java:14)
+2026-10-17T10:04:31.0200111Z ##[endgroup]
+2026-10-17T10:04:31.0300111Z [INFO] BUILD FAILURE

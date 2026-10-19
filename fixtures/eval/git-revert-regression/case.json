@@ -1,0 +1,8 @@
+{
+  "id": "git-revert-regression",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["discountcents"],
+  "evidenceLocators": ["RefundCalculator.java", "revert"],
+  "requiredTools": ["git_history"],
+  "relevantTools": ["git_history", "source_location"]
+}

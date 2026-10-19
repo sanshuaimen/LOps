@@ -1,7 +1,7 @@
 {
   "id": "compile-symbol",
   "expectedCategory": "DEPENDENCY_BUILD",
-  "rootCauseKeywords": ["symbol"],
+  "rootCauseKeywords": ["legacypricing"],
   "evidenceLocators": ["cannot find symbol"],
   "requiredTools": ["dependency_analysis"],
   "relevantTools": ["dependency_analysis", "source_symbol_search"]

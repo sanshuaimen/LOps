@@ -1,0 +1,6 @@
+[INFO] --- maven-compiler-plugin:3.13.0:compile @ warehouse ---
+[ERROR] /home/ci/work/warehouse/src/main/java/com/example/warehouse/PickingList.java:[5,34] cannot find symbol
+[ERROR]   symbol:   class InventoryClient
+[ERROR]   location: package com.example.inventory
+[INFO] 1 error
+[INFO] BUILD FAILURE

@@ -1,0 +1,8 @@
+{
+  "id": "infra-connection-refused",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["refused"],
+  "evidenceLocators": ["connection refused", "AlertDispatchClientTest.opensDispatchSocket"],
+  "requiredTools": ["flaky_history"],
+  "relevantTools": ["flaky_history", "failure_evidence"]
+}

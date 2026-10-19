@@ -1,0 +1,7 @@
+{
+  "id": "multi-module-api-break",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["quote"],
+  "evidenceLocators": ["OrdersController.java"],
+  "relevantTools": ["dependency_analysis", "failure_evidence"]
+}

@@ -1,0 +1,7 @@
+{
+  "id": "compile-test-source",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["checkouttotal"],
+  "evidenceLocators": ["cannot find symbol", "CartTest.java"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

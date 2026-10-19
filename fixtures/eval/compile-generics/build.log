@@ -1,0 +1,5 @@
+[INFO] --- maven-compiler-plugin:3.13.0:compile @ inventory ---
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile (default-compile) on project inventory: Compilation failure
+[ERROR] /home/ci/work/inventory/src/main/java/com/example/inventory/StockAggregator.java:[8,29] incompatible types: java.util.List<java.lang.String> cannot be converted to java.util.List<java.lang.Integer>
+[INFO] 1 error
+[INFO] BUILD FAILURE

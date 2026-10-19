@@ -1,0 +1,6 @@
+{
+  "id": "unknown-redacted-log",
+  "expectedCategory": "UNKNOWN",
+  "shouldBeUnknown": true,
+  "forbiddenConclusions": ["definitely", "apply this fix"]
+}

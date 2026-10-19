@@ -5,6 +5,7 @@ import com.cifa.llm.FakeLLMProvider;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -48,6 +49,19 @@ class EvalCorpusTest {
                 "missing path-sensitive cases (requiredTools)");
         assertTrue(cases.stream().anyMatch(c -> !c.forbiddenConclusions().isEmpty()),
                 "missing forbidden-conclusion cases");
+
+        // Per-category floors lock in the P0-14 batch-2 distribution (33 cases):
+        // a later batch must not quietly delete a scenario family.
+        Map<FailureCategory, Long> counts = cases.stream()
+                .collect(Collectors.groupingBy(GoldenCase::expectedCategory, Collectors.counting()));
+        assertTrue(counts.getOrDefault(FailureCategory.LOGIC_ERROR, 0L) >= 10,
+                "LOGIC_ERROR floor: " + counts);
+        assertTrue(counts.getOrDefault(FailureCategory.DEPENDENCY_BUILD, 0L) >= 10,
+                "DEPENDENCY_BUILD floor: " + counts);
+        assertTrue(counts.getOrDefault(FailureCategory.INFRA_FLAKY, 0L) >= 5,
+                "INFRA_FLAKY floor: " + counts);
+        assertTrue(counts.getOrDefault(FailureCategory.UNKNOWN, 0L) >= 4,
+                "UNKNOWN floor: " + counts);
     }
 
     @Test

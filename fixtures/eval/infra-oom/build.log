@@ -1,0 +1,8 @@
+2026-10-16T08:12:04.7712345Z ##[group]Run mvn -B verify
+2026-10-16T08:12:31.0102233Z [INFO] Scanning for projects...
+2026-10-16T08:14:37.9981120Z [INFO] --- maven-surefire-plugin:3.2.5:test @ report-export ---
+2026-10-16T08:15:02.3145510Z [ERROR] java.lang.OutOfMemoryError: Java heap space
+2026-10-16T08:15:02.3187410Z [ERROR] java.lang.OutOfMemoryError: Java heap space
+2026-10-16T08:15:02.3300211Z [ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test (default-test) on project report-export: Execution default-test of goal maven-surefire-plugin:3.2.5:test failed: there were test crashes
+2026-10-16T08:15:02.3411009Z ##[error]Process completed with exit code 1.
+2026-10-16T08:15:02.3511009Z [INFO] BUILD FAILURE

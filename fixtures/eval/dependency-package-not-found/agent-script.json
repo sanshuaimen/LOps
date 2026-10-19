@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "does not exist"},
+    "hypothesis": "the javac error names the exact missing package and the importing file"
+  },
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "whether a module declares or misses the pricing-api dependency decides this; source history cannot"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "InvoiceExporter imports com.example.pricing.api.PriceFeed but the billing module's pom declares no pricing-api dependency, so javac cannot resolve the package at compile time",
+    "evidenceIds": ["LOG-002", "DEP-001"],
+    "confidence": 78,
+    "suggestedAction": "add the com.example:pricing-api dependency to billing/pom.xml"
+  }
+]

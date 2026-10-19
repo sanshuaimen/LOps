@@ -1,0 +1,6 @@
+{
+  "id": "unknown-truncated-pipeline",
+  "expectedCategory": "UNKNOWN",
+  "shouldBeUnknown": true,
+  "forbiddenConclusions": ["definitely", "apply this fix"]
+}

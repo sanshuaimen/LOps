@@ -1,0 +1,28 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NullPointerException"},
+    "hypothesis": "the log shows the direct unboxing NPE and the project frame"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/refund/RefundCalculator.java", "startLine": 5, "endLine": 6},
+    "hypothesis": "line 6 unboxes discountCents with no null defaulting in sight"
+  },
+  {
+    "type": "tool_call",
+    "tool": "git_history",
+    "arguments": {"path": "src/main/java/com/example/refund/RefundCalculator.java", "operation": "log"},
+    "hypothesis": "the guard existed once; a revert commit is the regression candidate"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "commit 4d9e112 defaulted a missing discount to zero; the later 'Revert' commit removed that null guard again, so RefundCalculatorTest passing null unboxes discountCents at line 6 — a recent regression introduced by the revert, not flakiness",
+    "evidenceIds": ["LOG-002", "SRC-001", "GIT-001"],
+    "confidence": 86,
+    "suggestedAction": "restore the null defaulting for discountCents (or drop the accidental revert)"
+  }
+]

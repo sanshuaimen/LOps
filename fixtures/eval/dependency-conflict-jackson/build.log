@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ export ---
+[ERROR] Tests run: 7, Failures: 0, Errors: 1
+[ERROR] ExportMapperTest.writesReportJson  Time elapsed: 0.2 s  <<< ERROR!
+java.lang.NoSuchMethodError: com.fasterxml.jackson.databind.SerializationConfig.withoutFeatures([Lcom/fasterxml/jackson/databind/SerializationFeature;)
+	at com.example.export.ExportMapper.toJson(ExportMapper.java:11)
+	at com.example.export.ExportMapperTest.writesReportJson(ExportMapperTest.java:9)
+[INFO] BUILD FAILURE

@@ -1,0 +1,8 @@
+{
+  "id": "symbol-moved-package",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["inventory.domain"],
+  "evidenceLocators": ["cannot find symbol", "inventory"],
+  "requiredTools": ["source_symbol_search"],
+  "relevantTools": ["source_symbol_search", "failure_evidence"]
+}

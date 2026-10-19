@@ -1,0 +1,7 @@
+{
+  "id": "infra-dns-unresolved",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["unknownhost"],
+  "evidenceLocators": ["billing-sync.internal.example.com"],
+  "relevantTools": ["failure_evidence"]
+}

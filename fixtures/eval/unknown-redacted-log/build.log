@@ -1,0 +1,8 @@
+[INFO] Starting nightly reconciliation job
+[INFO] Loading configuration from ***REDACTED***
+[INFO] Connecting to ***REDACTED***:5432 as user ***REDACTED***
+[INFO] Fetched ***REDACTED*** rows from ***REDACTED***
+[INFO] Applying ***REDACTED*** business rules to ***REDACTED*** entries
+[ERROR] Job terminated with exit code 70 after ***REDACTED*** without diagnostics
+[INFO] Operator bundle: see attachment ***REDACTED*** (contents withheld by policy)
+[INFO] Re-run with --verbose once the redaction waiver is approved

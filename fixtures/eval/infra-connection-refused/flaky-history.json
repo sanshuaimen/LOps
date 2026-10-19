@@ -1,0 +1,10 @@
+{
+  "com.example.notify.AlertDispatchClientTest.opensDispatchSocket": [
+    {"build": "b-2011", "passed": true},
+    {"build": "b-2012", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-2013", "passed": true},
+    {"build": "b-2014", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "b-2015", "passed": true},
+    {"build": "b-2016", "passed": false, "rerunPassed": true, "relatedCommit": ""}
+  ]
+}

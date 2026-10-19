@@ -1,0 +1,8 @@
+[INFO] Pipeline stage 'integration' started on runner osso-cluster-7f
+[INFO] Running 47 checks against staging
+[INFO] check 1..31 passed
+[INFO] check 32 (billing-roundtrip) started
+[WARN] check 32 exceeded its 600s budget
+[ERROR] stage aborted: exit status 1
+[ERROR] ... output truncated after 4096 lines; the failing check's log was lost ...
+[INFO] Pipeline failed. Re-run the stage to reproduce.

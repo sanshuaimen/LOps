@@ -1,0 +1,8 @@
+{
+  "id": "symbol-rename-method",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["formatamount"],
+  "evidenceLocators": ["cannot find symbol", "formatAmount"],
+  "requiredTools": ["source_symbol_search"],
+  "relevantTools": ["source_symbol_search", "failure_evidence"]
+}

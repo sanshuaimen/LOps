@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NoSuchMethodError"},
+    "hypothesis": "a NoSuchMethodError on a library type means compile-time and runtime jars disagree; the log confirms which method"
+  },
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "the conflict must come from two modules pinning different jackson versions; the pom graph decides, not git history"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "export compiles against jackson-databind 2.15.2 but its own pom pins 2.9.8 while core pins 2.15.2; the runtime classpath resolves the older jar whose SerializationConfig lacks withoutFeatures — a module-level dependency version conflict",
+    "evidenceIds": ["LOG-002", "DEP-001"],
+    "confidence": 80,
+    "suggestedAction": "align jackson-databind to one version via the parent's dependencyManagement and drop the hand pins"
+  }
+]

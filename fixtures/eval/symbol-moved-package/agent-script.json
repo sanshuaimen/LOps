@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the javac detail says which class the stale import cannot resolve"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_symbol_search",
+    "arguments": {"symbol": "InventoryClient"},
+    "hypothesis": "the class may have moved packages rather than been deleted; a repo-wide search finds its real home"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "InventoryClient moved to com.example.inventory.domain in the packaging cleanup; PickingList's import still points at the old package com.example.inventory",
+    "evidenceIds": ["LOG-002", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "update the PickingList import to com.example.inventory.domain.InventoryClient"
+  }
+]

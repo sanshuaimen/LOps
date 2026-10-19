@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the javac detail names the missing method and the holder type"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_symbol_search",
+    "arguments": {"symbol": "formatAmount"},
+    "hypothesis": "a repo-wide search shows whether formatAmount still exists anywhere or was renamed — the rename-migration direction"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "the 1.4 money API renamed AmountFormatter.formatAmount to render; PaymentGateway.receipt still calls formatAmount at line 15 — a caller the rename did not migrate",
+    "evidenceIds": ["LOG-002", "SRC-001"],
+    "confidence": 85,
+    "suggestedAction": "migrate PaymentGateway to formatter.render(amount)"
+  }
+]

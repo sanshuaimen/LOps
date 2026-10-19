@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "could not obtain lock"},
+    "hypothesis": "lock contention during a maintenance statement is a concurrency-flakiness candidate; the log shows the statement and the frame"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.search.IndexRefresherTest.refreshAfterBulkImport"},
+    "hypothesis": "the independent history decides between a real regression and an environment-timing flake"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "ANALYZE on documents contends with concurrent bulk-import transactions and the lock wait expires; the history shows intermittent failures that recover on rerun with no related code change, so this is flaky under concurrent maintenance, not a product regression",
+    "evidenceIds": ["LOG-002", "FLAKY-001"],
+    "confidence": 68,
+    "suggestedAction": "raise the lock_timeout for the maintenance window and mark the test as timing-sensitive"
+  }
+]

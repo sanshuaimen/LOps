@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ billing-sync ---
+[ERROR] Tests run: 24, Failures: 0, Errors: 1
+[ERROR] InvoiceSyncServiceTest.pushesPendingInvoices  Time elapsed: 5.4 s  <<< ERROR!
+java.net.UnknownHostException: billing-sync.internal.example.com: Name or service not known
+	at java.base/java.net.InetAddress$CachedAddresses.get(InetAddress.java:797)
+	at com.example.billing.InvoiceSyncService.pushPendingInvoices(InvoiceSyncService.java:31)
+[INFO] BUILD FAILURE

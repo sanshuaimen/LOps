@@ -1,0 +1,7 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ search ---
+[ERROR] Tests run: 12, Failures: 0, Errors: 1
+[ERROR] IndexRefresherTest.refreshAfterBulkImport  Time elapsed: 30.1 s  <<< ERROR!
+java.sql.SQLTransactionRollbackException: timeout: could not obtain lock on relation "documents"
+	at com.example.search.IndexRefresher.refresh(IndexRefresher.java:15)
+	at com.example.search.IndexRefresherTest.refreshAfterBulkImport(IndexRefresherTest.java:13)
+[INFO] BUILD FAILURE
