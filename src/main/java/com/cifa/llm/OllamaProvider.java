@@ -11,6 +11,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,9 @@ public final class OllamaProvider implements LLMProvider {
     // insufficient: a JSON-repair pass before giving up.
     private static final Pattern THINK_BLOCK = Pattern.compile("(?s)<think>.*?</think>");
 
+    /** Request-level bound (connectTimeout only bounds the handshake, not the response). */
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
+
     static final String SYSTEM_PROMPT =
             "You are a build-failure analyst. Only reason from the evidence given. "
             + "Never invent file names, line numbers, or commits not present in the input. "
@@ -34,12 +38,20 @@ public final class OllamaProvider implements LLMProvider {
 
     private final String baseUrl;
     private final String model;
+    private final Duration requestTimeout;
     private final HttpClient client;
 
     public OllamaProvider(String baseUrl, String model) {
+        this(baseUrl, model, REQUEST_TIMEOUT);
+    }
+
+    OllamaProvider(String baseUrl, String model, Duration requestTimeout) {
         this.baseUrl = baseUrl;
         this.model = model;
-        this.client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        this.requestTimeout = requestTimeout;
+        this.client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     @Override
@@ -69,7 +81,10 @@ public final class OllamaProvider implements LLMProvider {
 
     @Override
     public LLMResponse invoke(LLMRequest request) throws IOException, InterruptedException {
-        ProviderReply reply = extractReply(callOllama(request));
+        // callOllama returns the already-extracted message.content text; the reply
+        // envelope (and its usage counters) only exists on the raw chat response —
+        // extracting twice was a latent bug no Fake-based test could ever catch.
+        ProviderReply reply = extractReply(chatResponse(request));
         return LLMResponse.parse(THINK_BLOCK.matcher(reply.text()).replaceAll("").trim(),
                 reply.inputTokens(), reply.outputTokens());
     }
@@ -79,13 +94,18 @@ public final class OllamaProvider implements LLMProvider {
     }
 
     String callOllama(LLMRequest request) throws IOException, InterruptedException, JSONException {
+        return extractContent(chatResponse(request));
+    }
+
+    /** Raw /api/chat envelope: callers either extract content or read usage counters. */
+    private String chatResponse(LLMRequest request) throws IOException, InterruptedException {
         HttpRequest httpRequest = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/chat"))
+                .timeout(requestTimeout)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(buildStructuredRequestBody(model, request)))
                 .build();
-        HttpResponse<String> response = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
-        return extractContent(response.body());
+        return send(httpRequest).body();
     }
 
     static String buildStructuredRequestBody(String model, LLMRequest request) {
@@ -122,12 +142,29 @@ public final class OllamaProvider implements LLMProvider {
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + "/api/chat"))
+                .timeout(requestTimeout)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
 
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = send(request);
         return extractContent(response.body());
+    }
+
+    private HttpResponse<String> send(HttpRequest request) throws IOException, InterruptedException {
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // without this check a 429/5xx error body flows into extractContent and is
+            // misreported as "unparseable model output" instead of a server-side failure
+            if (AnthropicProvider.isErrorStatus(response.statusCode())) {
+                throw AnthropicProvider.ioExceptionFor(response.statusCode(), "Ollama");
+            }
+            return response;
+        } catch (HttpTimeoutException e) {
+            // covers connect timeouts (subclass) and the request-level timeout above
+            throw new TransientModelException("model request timed out after "
+                    + requestTimeout.getSeconds() + "s", e);
+        }
     }
 
     static String extractContent(String responseBody) throws JSONException {

@@ -5,6 +5,7 @@ import com.cifa.evidence.EvidenceType;
 import com.cifa.evidence.EvidenceVerifier;
 import com.cifa.llm.AgentDecision;
 import com.cifa.llm.FakeLLMProvider;
+import com.cifa.llm.RateLimitedException;
 import com.cifa.security.RepositoryPathPolicy;
 import com.cifa.tool.ToolRegistry;
 import com.cifa.trace.InMemoryTraceRecorder;
@@ -102,5 +103,33 @@ class ModelFailurePolicyTest {
 
         assertEquals(AgentStopReason.INSUFFICIENT_EVIDENCE, outcome.stopReason());
         assertEquals(3, provider.requests().size());
+    }
+
+    @Test
+    void rateLimitFailuresExhaustIntoACategorizedModelFailure() {
+        // RateLimitedException is an IOException subclass, so the retry count is
+        // unchanged — what's new is the category travelling through the trace.
+        EvidenceCatalog catalog = new EvidenceCatalog("task-1");
+        InMemoryTraceRecorder trace = new InMemoryTraceRecorder();
+        EvidenceVerifier verifier = new EvidenceVerifier(catalog, new RepositoryPathPolicy(repo));
+        FakeLLMProvider provider = new FakeLLMProvider();
+        for (int i = 0; i < 3; i++) {
+            provider.enqueueFailure(new RateLimitedException("fake upstream says 429"));
+        }
+        InvestigationAgentLoop loop = new InvestigationAgentLoop(provider, new ToolRegistry(),
+                catalog, verifier, trace,
+                new InvestigationBudget(8, 50_000, java.time.Duration.ofMinutes(5), 3, 2, 2),
+                "task-1", "fake");
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop);
+
+        assertEquals(AgentStopReason.MODEL_FAILURE, outcome.stopReason());
+        assertNull(outcome.diagnosis());
+        assertEquals(3, provider.requests().size(), "modelRetries=2 means 3 attempts");
+        assertTrue(trace.events().stream().anyMatch(event -> event.eventType().equals("model_failure")
+                && event.error().contains("gave up after 3 attempts")
+                && event.error().contains("rate_limited")), () -> trace.events().toString());
+        assertTrue(trace.events().stream().filter(event -> event.eventType().equals("model_retry"))
+                .allMatch(event -> event.error().startsWith("rate_limited: ")));
     }
 }

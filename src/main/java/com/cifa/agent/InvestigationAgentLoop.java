@@ -5,6 +5,8 @@ import com.cifa.evidence.EvidenceCatalog;
 import com.cifa.evidence.EvidenceVerifier;
 import com.cifa.llm.AgentDecision;
 import com.cifa.llm.LLMMessage;
+import com.cifa.llm.RateLimitedException;
+import com.cifa.llm.TransientModelException;
 import org.json.JSONException;
 import com.cifa.llm.LLMProvider;
 import com.cifa.llm.LLMRequest;
@@ -34,8 +36,12 @@ public final class InvestigationAgentLoop {
     }
 
     private static final class ModelFailure extends RuntimeException {
-        private ModelFailure(Throwable cause) {
+        /** Human-readable end-of-retries line; travels into the trace's error field. */
+        private final String summary;
+
+        private ModelFailure(String summary, Throwable cause) {
             super(cause);
+            this.summary = summary;
         }
     }
 
@@ -79,7 +85,7 @@ public final class InvestigationAgentLoop {
                     response = invokeWithRetry(new LLMRequest(systemPrompt(tools.schemas()), messages, tools.schemas()), state);
                 } catch (ModelFailure failure) {
                     state.stop(AgentStopReason.MODEL_FAILURE);
-                    trace(state, "model_failure", "", "", "", List.of(), 0, "failed", "", String.valueOf(failure.getCause()));
+                    trace(state, "model_failure", "", "", "", List.of(), 0, "failed", "", failure.summary);
                     return new AgentOutcome(null, AgentStopReason.MODEL_FAILURE, state);
                 }
                 state.recordTokens(response.totalTokens());
@@ -205,19 +211,45 @@ public final class InvestigationAgentLoop {
             } catch (IOException e) {
                 lastIoFailure = e;
                 trace(state, "model_retry", "", "", "", List.of(), 0, "retry", "",
-                        e.getMessage() == null ? "io error" : e.getMessage());
+                        categorized(failureCategory(e), e));
             } catch (JSONException e) {
                 lastParseFailure = e;
                 trace(state, "model_retry", "", "", "", List.of(), 0, "retry", "",
-                        e.getMessage() == null ? "unparseable model output" : e.getMessage());
+                        categorized("unparseable_output", e));
             } catch (IllegalArgumentException e) {
-                throw new ModelFailure(e);
+                throw new ModelFailure(
+                        gaveUpAfter(1, "contract_violation", e.getMessage()), e);
             }
         }
+        int attempts = budget.modelRetries() + 1;
         if (lastParseFailure != null) {
-            throw new ModelFailure(lastParseFailure);
+            throw new ModelFailure(
+                    gaveUpAfter(attempts, "unparseable_output", lastParseFailure.getMessage()),
+                    lastParseFailure);
         }
-        throw new ModelFailure(lastIoFailure);
+        throw new ModelFailure(
+                gaveUpAfter(attempts, failureCategory(lastIoFailure), lastIoFailure.getMessage()),
+                lastIoFailure);
+    }
+
+    /** Transport-layer subclasses get their own category; the rest are generic io errors. */
+    private static String failureCategory(IOException e) {
+        if (e instanceof RateLimitedException) {
+            return "rate_limited";
+        }
+        if (e instanceof TransientModelException) {
+            return "timeout";
+        }
+        return "io_error";
+    }
+
+    private static String categorized(String category, Exception e) {
+        return category + ": " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+    }
+
+    private static String gaveUpAfter(int attempts, String category, String lastMessage) {
+        return "gave up after " + attempts + " attempts (last category: " + category + "): "
+                + (lastMessage == null ? "no detail" : lastMessage);
     }
 
     private String toolFeedback(AgentDecision decision, ToolResult result, boolean repeated) {

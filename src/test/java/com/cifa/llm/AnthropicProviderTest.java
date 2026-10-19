@@ -5,6 +5,7 @@ import com.cifa.context.AnalysisContext;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.net.http.HttpRequest;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -85,6 +86,28 @@ class AnthropicProviderTest {
         assertTrue(AnthropicProvider.isErrorStatus(401));
         assertTrue(AnthropicProvider.isErrorStatus(429));
         assertTrue(AnthropicProvider.isErrorStatus(500));
+    }
+
+    @Test
+    void rateLimitAnswersGetTheirOwnExceptionClass() {
+        IOException e = AnthropicProvider.ioExceptionFor(429, "Anthropic");
+        assertInstanceOf(RateLimitedException.class, e);
+        assertTrue(e.getMessage().contains("429"), e.getMessage());
+    }
+
+    @Test
+    void otherErrorStatusesStayPlainIoExceptions() {
+        IOException e = AnthropicProvider.ioExceptionFor(500, "Anthropic");
+        assertFalse(e instanceof RateLimitedException);
+        assertTrue(e.getMessage().contains("500"), e.getMessage());
+    }
+
+    @Test
+    void buildRequestCarriesRequestLevelTimeout() {
+        AnalysisContextFixture ctx = new AnalysisContextFixture();
+        HttpRequest request = AnthropicProvider.buildRequest("test-api-key", "claude-sonnet-5", ctx.context());
+        // connectTimeout alone cannot bound a silent server: without this, send() hangs forever
+        assertTrue(request.timeout().isPresent(), "request must carry a request-level timeout");
     }
 
     private static final class AnalysisContextFixture {
