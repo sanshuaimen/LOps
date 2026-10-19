@@ -22,3 +22,13 @@ jobs:
       # runs here in full — closing what the Docker-less dev box skips.
       - name: Run full test suite
         run: mvn -B test
+
+      # Worker-side diagnostics (thread dumps, swallowed-exception logs) live in
+      # surefire's <system-out>, not in the Maven summary — keep the raw reports
+      # so a failed run can be post-mortemed without re-running CI.
+      - name: Upload surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/

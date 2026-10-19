@@ -115,6 +115,34 @@ class CancelChainTest {
             }
             Thread.sleep(25);
         }
-        fail("task " + taskId + " did not reach " + expected + " in time");
+        // Timeout evidence, in order: where the worker threads actually are, then
+        // the row's real terminal state. The failure paths on this chain are all
+        // silent (swallowed secondaries), so a stuck row carries no clue on its own.
+        dumpWorkerStacks();
+        DiagnosisTaskEntity task = taskMapper.selectById(taskId);
+        fail("task " + taskId + " did not reach " + expected + " in time; row: "
+                + (task == null ? "<row gone>" : describe(task)));
+    }
+
+    private static String describe(DiagnosisTaskEntity task) {
+        return "status=" + task.getStatus()
+                + ", stopReason=" + task.getStopReason()
+                + ", errorMessage=" + task.getErrorMessage()
+                + ", finalDiagnosis=" + (task.getFinalDiagnosis() == null ? "null" : "present");
+    }
+
+    /** Printed to System.out so surefire keeps it in the failure report's <system-out>. */
+    private static void dumpWorkerStacks() {
+        System.out.println("==== awaitStatus timed out; cancel-test-* thread dump ====");
+        Thread.getAllStackTraces().forEach((thread, frames) -> {
+            if (!thread.getName().startsWith("cancel-test-")) {
+                return;
+            }
+            System.out.println("-- " + thread.getName() + " state=" + thread.getState());
+            for (StackTraceElement frame : frames) {
+                System.out.println("     at " + frame);
+            }
+        });
+        System.out.println("==== end thread dump ====");
     }
 }

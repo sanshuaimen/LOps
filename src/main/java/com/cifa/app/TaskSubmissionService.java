@@ -3,6 +3,8 @@ package com.cifa.app;
 import com.cifa.llm.LLMProvider;
 import com.cifa.persistence.entity.DiagnosisTaskEntity;
 import com.cifa.persistence.mapper.DiagnosisTaskMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -25,6 +27,8 @@ import java.util.concurrent.RejectedExecutionException;
  */
 @Component
 public class TaskSubmissionService {
+
+    private static final Logger log = LoggerFactory.getLogger(TaskSubmissionService.class);
 
     /** Raised when the bounded pool is saturated; the REST layer maps this to 429. */
     public static final class TaskSubmissionRejected extends RuntimeException {
@@ -124,7 +128,11 @@ public class TaskSubmissionService {
         try {
             store.failFromCurrentStatus(task, "EXECUTION_ERROR", message);
         } catch (RuntimeException secondary) {
-            // DB itself is unhappy; nothing further can be done on this thread
+            // DB itself is unhappy; nothing further can be done on this thread.
+            // This used to be silent — the one place a row could get stuck in a
+            // non-terminal state with zero evidence left behind. Never swallow it.
+            log.warn("task {}: fallback FAILED persist failed too; row may be stuck non-terminal",
+                    task.getId(), secondary);
         }
     }
 
