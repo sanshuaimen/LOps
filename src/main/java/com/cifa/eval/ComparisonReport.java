@@ -22,6 +22,16 @@ public final class ComparisonReport {
             > below must be re-measured with real models before being quoted.
             """;
 
+    private static final String REAL_MODEL_DISCLAIMER = """
+            > **Scope of this report:** REAL model runs — these numbers are specific to
+            > the provider/model named in the header and its decoding parameters; they
+            > are NOT comparable across models without re-running the same corpus.
+            """;
+
+    private static String disclaimerFor(String provider) {
+        return provider.startsWith("fake") ? DISCLAIMER : REAL_MODEL_DISCLAIMER;
+    }
+
     private final EvalReport baseline;
     private final EvalReport agent;
     private final ReportMetadata metadata;
@@ -46,7 +56,7 @@ public final class ComparisonReport {
         markdown.append("provider: ").append(metadata.provider()).append('\n');
         markdown.append("run id: ").append(metadata.runId()).append('\n');
         markdown.append("prompt/config version: ").append(baseline.version()).append("\n\n");
-        markdown.append(DISCLAIMER).append('\n');
+        markdown.append(disclaimerFor(metadata.provider())).append('\n');
 
         markdown.append("## Aggregate metrics\n\n");
         markdown.append("| metric | baseline | agent |\n| --- | --- | --- |\n");

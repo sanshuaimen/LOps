@@ -31,8 +31,13 @@ public record ReportMetadata(
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-    /** comparison-<datasetVersion>-<provider>-<runId>.md */
+    /** comparison-<datasetVersion>-<provider>-<runId>.md; provider/model labels are
+     * sanitized so ollama-style "name:tag" names stay filesystem-safe. */
     public String fileName() {
-        return "comparison-" + datasetVersion + "-" + provider + "-" + runId + ".md";
+        return "comparison-" + sanitize(datasetVersion) + "-" + sanitize(provider) + "-" + sanitize(runId) + ".md";
+    }
+
+    private static String sanitize(String value) {
+        return value.replaceAll("[^A-Za-z0-9._-]", "-");
     }
 }
