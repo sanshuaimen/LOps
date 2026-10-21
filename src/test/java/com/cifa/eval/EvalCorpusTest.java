@@ -78,6 +78,34 @@ class EvalCorpusTest {
     }
 
     @Test
+    void corpusCarriesPerLayerFloors() throws Exception {
+        List<GoldenCase> cases = GoldenCase.loadDirectory(FIXTURES);
+
+        Map<String, Long> counts = cases.stream()
+                .collect(Collectors.groupingBy(GoldenCase::layer, Collectors.counting()));
+        // Floors lock the 5a layering of the 33-case corpus; a later batch must not
+        // quietly hollow out a layer (accept = path-sensitive acceptance set).
+        assertTrue(counts.getOrDefault("accept", 0L) >= 14, "accept floor: " + counts);
+        assertTrue(counts.getOrDefault("regression", 0L) >= 9, "regression floor: " + counts);
+        assertTrue(counts.getOrDefault("robustness", 0L) >= 8, "robustness floor: " + counts);
+        assertTrue(counts.getOrDefault("security", 0L) >= 2, "security floor: " + counts);
+        assertEquals(Set.copyOf(GoldenCase.knownLayers()), counts.keySet(),
+                "every known layer must be present; counts=" + counts);
+    }
+
+    @Test
+    void loadDirectoryByLayerFiltersAndRejectsUnknownLayers() throws Exception {
+        List<GoldenCase> accept = GoldenCase.loadDirectory(FIXTURES, "accept");
+        assertFalse(accept.isEmpty());
+        assertTrue(accept.stream().allMatch(c -> c.layer().equals("accept")));
+        assertTrue(accept.size() < GoldenCase.loadDirectory(FIXTURES).size(), "layer filter must narrow");
+
+        IllegalArgumentException unknown = assertThrows(IllegalArgumentException.class,
+                () -> GoldenCase.loadDirectory(FIXTURES, "bogus"));
+        assertTrue(unknown.getMessage().contains("bogus"));
+    }
+
+    @Test
     void runsBaselineEvalOverWholeCorpusWithoutErrors() throws Exception {
         List<GoldenCase> cases = GoldenCase.loadDirectory(FIXTURES);
         EvalReport report = new EvalRunner().runBaseline(cases, new FakeLLMProvider());

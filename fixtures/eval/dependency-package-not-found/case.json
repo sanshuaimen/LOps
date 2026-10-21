@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "dependency-package-not-found",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["pricing.api"],

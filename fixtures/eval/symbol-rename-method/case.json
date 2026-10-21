@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "symbol-rename-method",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["formatamount"],

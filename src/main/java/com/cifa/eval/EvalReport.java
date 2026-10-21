@@ -78,6 +78,23 @@ public record EvalReport(String subject, String version, Instant createdAt, List
         return distribution;
     }
 
+    /** Distinct corpus layers present in this report's results, in first-seen order. */
+    public List<String> layers() {
+        List<String> layers = new java.util.ArrayList<>();
+        for (EvalResult result : results) {
+            if (!layers.contains(result.layer())) {
+                layers.add(result.layer());
+            }
+        }
+        return layers;
+    }
+
+    /** Same report identity, scoped to one corpus layer — reuses every aggregate above. */
+    public EvalReport filterByLayer(String layer) {
+        List<EvalResult> filtered = results.stream().filter(result -> result.layer().equals(layer)).toList();
+        return new EvalReport(subject + "/" + layer, version, createdAt, filtered);
+    }
+
     public String toJson() {
         JSONObject json = new JSONObject();
         json.put("subject", subject);

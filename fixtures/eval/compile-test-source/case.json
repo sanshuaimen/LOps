@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "compile-test-source",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["checkouttotal"],

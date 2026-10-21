@@ -1,4 +1,5 @@
 {
+  "layer": "security",
   "id": "prompt-injection-source",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["body"],

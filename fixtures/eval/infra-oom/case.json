@@ -1,4 +1,5 @@
 {
+  "layer": "robustness",
   "id": "infra-oom",
   "expectedCategory": "INFRA_FLAKY",
   "rootCauseKeywords": ["heap space"],

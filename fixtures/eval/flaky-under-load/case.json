@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "flaky-under-load",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["503"],

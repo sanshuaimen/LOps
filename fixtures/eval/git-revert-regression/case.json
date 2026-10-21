@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "git-revert-regression",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["discountcents"],

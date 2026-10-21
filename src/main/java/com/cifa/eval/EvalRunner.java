@@ -170,7 +170,7 @@ public final class EvalRunner {
         boolean requiredToolsSatisfied = goldenCase.requiredTools().isEmpty()
                 || observation.toolCalls().containsAll(goldenCase.requiredTools());
         return new EvalResult(
-                goldenCase.id(), goldenCase.expectedCategory().name(), actualCategory,
+                goldenCase.id(), goldenCase.expectedCategory().name(), actualCategory, goldenCase.layer(),
                 categoryCorrect, rootCauseCorrect, evidenceCorrect, evidenceSufficient,
                 unknownCorrect, forbiddenFree, requiredToolsSatisfied, observation.toolCalls(), fullSweep,
                 irrelevant, repeated, observation.tokenCount(), observation.elapsedMillis(),

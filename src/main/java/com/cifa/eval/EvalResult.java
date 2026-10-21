@@ -9,6 +9,7 @@ public record EvalResult(
         String caseId,
         String expectedCategory,
         String actualCategory,
+        String layer,
         boolean categoryCorrect,
         boolean rootCauseCorrect,
         boolean evidenceCorrect,
@@ -50,6 +51,7 @@ public record EvalResult(
         json.put("caseId", caseId);
         json.put("expectedCategory", expectedCategory);
         json.put("actualCategory", actualCategory);
+        json.put("layer", layer);
         json.put("categoryCorrect", categoryCorrect);
         json.put("rootCauseCorrect", rootCauseCorrect);
         json.put("evidenceCorrect", evidenceCorrect);

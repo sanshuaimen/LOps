@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "multi-module-api-break",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["quote"],

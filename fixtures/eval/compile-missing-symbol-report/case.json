@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "compile-missing-symbol-report",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["cannot find symbol"],

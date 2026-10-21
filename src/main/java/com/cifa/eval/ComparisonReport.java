@@ -63,6 +63,23 @@ public final class ComparisonReport {
                 baseline.avgTokenCount(), agent.avgTokenCount()));
         markdown.append('\n');
 
+        markdown.append("## Per-layer breakdown\n\n");
+        markdown.append("| layer | cases (baseline/agent) | passed (b/a) | category acc (b/a) | root cause acc (b/a) | evidence acc (b/a) | required-tools (b/a) |\n");
+        markdown.append("| --- | --- | --- | --- | --- | --- | --- |\n");
+        for (String layer : layers()) {
+            EvalReport baseLayer = baseline.filterByLayer(layer);
+            EvalReport agentLayer = agent.filterByLayer(layer);
+            markdown.append("| ").append(layer)
+                    .append(" | ").append(baseLayer.results().size()).append("/").append(agentLayer.results().size())
+                    .append(" | ").append(baseLayer.passedCount()).append("/").append(agentLayer.passedCount())
+                    .append(" | ").append(pct(baseLayer.categoryAccuracy())).append("%/").append(pct(agentLayer.categoryAccuracy())).append('%')
+                    .append(" | ").append(pct(baseLayer.rootCauseAccuracy())).append("%/").append(pct(agentLayer.rootCauseAccuracy())).append('%')
+                    .append(" | ").append(pct(baseLayer.evidenceAccuracy())).append("%/").append(pct(agentLayer.evidenceAccuracy())).append('%')
+                    .append(" | ").append(pct(baseLayer.requiredToolsSatisfiedRate())).append("%/").append(pct(agentLayer.requiredToolsSatisfiedRate())).append('%')
+                    .append(" |\n");
+        }
+        markdown.append('\n');
+
         markdown.append("## Tool-path distribution (agent)\n\n");
         agent.toolPathDistribution().forEach((path, count) ->
                 markdown.append("- ").append(count).append(" × `").append(path).append("`\n"));
@@ -103,6 +120,17 @@ public final class ComparisonReport {
         return baseline.results().stream()
                 .map(result -> new GoldenCaseId(result.caseId()))
                 .toList();
+    }
+
+    /** Layer order follows the baseline report (first seen), then any agent-only layers. */
+    private List<String> layers() {
+        List<String> layers = new java.util.ArrayList<>(baseline.layers());
+        for (String layer : agent.layers()) {
+            if (!layers.contains(layer)) {
+                layers.add(layer);
+            }
+        }
+        return layers;
     }
 
     private static EvalResult byCase(EvalReport report, String caseId) {

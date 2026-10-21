@@ -17,6 +17,7 @@ public record GoldenCase(
         Path logPath,
         Path repoRoot,
         FailureCategory expectedCategory,
+        String layer,
         List<String> rootCauseKeywords,
         List<String> evidenceLocators,
         boolean shouldBeUnknown,
@@ -24,6 +25,15 @@ public record GoldenCase(
         List<String> requiredTools,
         List<String> relevantTools
 ) {
+
+    /** Corpus layers: accept is the path-sensitive acceptance set, the rest group
+     * regression / robustness / security material for layered reporting. */
+    private static final List<String> LAYERS = List.of("accept", "regression", "robustness", "security");
+
+    public static List<String> knownLayers() {
+        return LAYERS;
+    }
+
     public GoldenCase {
         rootCauseKeywords = List.copyOf(rootCauseKeywords);
         evidenceLocators = List.copyOf(evidenceLocators);
@@ -37,11 +47,17 @@ public record GoldenCase(
         Path base = caseFile.getParent();
         String log = json.optString("log", "build.log");
         String repo = json.optString("repo", "repo");
+        String layer = json.getString("layer");
+        if (!LAYERS.contains(layer)) {
+            throw new IllegalArgumentException("unknown layer '" + layer + "' in " + caseFile
+                    + "; expected one of " + LAYERS);
+        }
         return new GoldenCase(
                 json.getString("id"),
                 base.resolve(log).normalize(),
                 base.resolve(repo).normalize(),
                 FailureCategory.valueOf(json.getString("expectedCategory")),
+                layer,
                 strings(json.optJSONArray("rootCauseKeywords")),
                 strings(json.optJSONArray("evidenceLocators")),
                 json.optBoolean("shouldBeUnknown", false),
@@ -70,6 +86,16 @@ public record GoldenCase(
         } catch (GoldenCaseLoadException e) {
             throw e;
         }
+    }
+
+    /** Same corpus walk, scoped to one layer — used by layered runs and per-layer floors. */
+    public static List<GoldenCase> loadDirectory(Path directory, String layer) throws IOException {
+        if (!knownLayers().contains(layer)) {
+            throw new IllegalArgumentException("unknown layer '" + layer + "'; expected one of " + LAYERS);
+        }
+        return loadDirectory(directory).stream()
+                .filter(candidate -> candidate.layer().equals(layer))
+                .toList();
     }
 
     private static List<String> strings(JSONArray array) {

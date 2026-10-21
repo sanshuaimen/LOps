@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "flaky-rerun-evidence",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["flaky"],

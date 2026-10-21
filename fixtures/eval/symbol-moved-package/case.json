@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "symbol-moved-package",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["inventory.domain"],

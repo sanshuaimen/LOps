@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "dependency-conflict-jackson",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["jackson"],

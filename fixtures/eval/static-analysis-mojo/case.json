@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "static-analysis-mojo",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["invoiceprinter"],

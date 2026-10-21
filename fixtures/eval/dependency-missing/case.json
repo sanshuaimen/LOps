@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "dependency-missing",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["pricing-lib"],

@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "compile-symbol",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["legacypricing"],

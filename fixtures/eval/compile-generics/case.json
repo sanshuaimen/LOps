@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "compile-generics",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["incompatible types"],

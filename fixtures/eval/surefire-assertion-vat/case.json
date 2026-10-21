@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "surefire-assertion-vat",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["vat"],

@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "dependency-parent-pom",
   "expectedCategory": "DEPENDENCY_BUILD",
   "rootCauseKeywords": ["app-parent"],

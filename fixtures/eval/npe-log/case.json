@@ -1,4 +1,5 @@
 {
+  "layer": "regression",
   "id": "npe-log",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["null", "customer"],

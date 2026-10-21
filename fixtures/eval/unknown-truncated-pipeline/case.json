@@ -1,4 +1,5 @@
 {
+  "layer": "robustness",
   "id": "unknown-truncated-pipeline",
   "expectedCategory": "UNKNOWN",
   "shouldBeUnknown": true,

@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "dependency-conflict-guava",
   "expectedCategory": "LOGIC_ERROR",
   "rootCauseKeywords": ["immutablelist"],

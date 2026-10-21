@@ -1,4 +1,5 @@
 {
+  "layer": "accept",
   "id": "infra-connection-refused",
   "expectedCategory": "INFRA_FLAKY",
   "rootCauseKeywords": ["refused"],

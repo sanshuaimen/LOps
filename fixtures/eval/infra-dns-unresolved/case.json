@@ -1,4 +1,5 @@
 {
+  "layer": "robustness",
   "id": "infra-dns-unresolved",
   "expectedCategory": "INFRA_FLAKY",
   "rootCauseKeywords": ["unknownhost"],
