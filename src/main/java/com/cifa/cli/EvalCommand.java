@@ -45,14 +45,15 @@ public final class EvalCommand {
     private static final String USAGE = """
             eval — golden-corpus evaluation runner (baseline vs agent)
 
-            Usage: eval [--fixtures <dir>] --provider fake|ollama|anthropic [--model <model>]
+            Usage: eval [--fixtures <dir>] --provider fake|ollama|anthropic|deepseek [--model <model>]
                         [--runs N] [--layer accept|regression|robustness|security|all]
                         [--out <dir>]
 
             Defaults: --fixtures fixtures/eval  --runs 1  --layer accept  --out target/eval-reports
             Provider defaults: ollama → OLLAMA_URL (default http://localhost:11434) + OLLAMA_MODEL
                                (default deepseek-r1:8b); anthropic → ANTHROPIC_API_KEY + ANTHROPIC_MODEL
-                               (default claude-sonnet-5).
+                               (default claude-sonnet-5); deepseek → DEEPSEEK_API_KEY + DEEPSEEK_MODEL
+                               (default deepseek-flash, served by DeepSeek-V4.1-Flash-1017).
             Credentials come from the environment only; nothing is stored in the repo.
             --provider fake never touches the network and is what CI uses.
             """;
@@ -130,11 +131,11 @@ public final class EvalCommand {
             return options;
         }
         if (options.provider == null) {
-            throw new UsageException("--provider is required (fake|ollama|anthropic)");
+            throw new UsageException("--provider is required (fake|ollama|anthropic|deepseek)");
         }
-        if (!List.of("fake", "ollama", "anthropic").contains(options.provider)) {
+        if (!List.of("fake", "ollama", "anthropic", "deepseek").contains(options.provider)) {
             throw new UsageException("unsupported --provider '" + options.provider
-                    + "' — supported values: fake, ollama, anthropic");
+                    + "' — supported values: fake, ollama, anthropic, deepseek");
         }
         if (!options.layer.equals("all") && !GoldenCase.knownLayers().contains(options.layer)) {
             throw new UsageException("unknown --layer '" + options.layer
@@ -177,6 +178,14 @@ public final class EvalCommand {
                             + "credentials come from the environment (never flags, repo, or git)");
                 }
                 yield new AnthropicProvider(apiKey, model);
+            }
+            case "deepseek" -> {
+                String apiKey = env.get("DEEPSEEK_API_KEY");
+                if (apiKey == null || apiKey.isBlank()) {
+                    throw new UsageException("DEEPSEEK_API_KEY is required for --provider deepseek; "
+                            + "credentials come from the environment (never flags, repo, or git)");
+                }
+                yield new com.cifa.llm.DeepSeekProvider(apiKey, model);
             }
             default -> throw new UsageException("unsupported provider " + options.provider);
         };
@@ -236,6 +245,7 @@ public final class EvalCommand {
         return switch (options.provider) {
             case "ollama" -> env.getOrDefault("OLLAMA_MODEL", "deepseek-r1:8b");
             case "anthropic" -> env.getOrDefault("ANTHROPIC_MODEL", "claude-sonnet-5");
+            case "deepseek" -> env.getOrDefault("DEEPSEEK_MODEL", com.cifa.llm.DeepSeekProvider.DEFAULT_MODEL);
             default -> "fake";
         };
     }

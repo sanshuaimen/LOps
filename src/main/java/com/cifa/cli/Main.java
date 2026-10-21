@@ -98,8 +98,17 @@ public final class Main {
                 String model = ConfigResolver.resolve(null, System.getenv("ANTHROPIC_MODEL"), fileConfig, "ANTHROPIC_MODEL", "claude-sonnet-5");
                 yield new AnthropicProvider(apiKey, model);
             }
+            case "deepseek" -> {
+                String apiKey = System.getenv("DEEPSEEK_API_KEY");
+                if (apiKey == null || apiKey.isBlank()) {
+                    throw new IllegalStateException(
+                            "DEEPSEEK_API_KEY environment variable is required for LLM_PROVIDER=deepseek");
+                }
+                String model = ConfigResolver.resolve(null, System.getenv("DEEPSEEK_MODEL"), fileConfig, "DEEPSEEK_MODEL", com.cifa.llm.DeepSeekProvider.DEFAULT_MODEL);
+                yield new com.cifa.llm.DeepSeekProvider(apiKey, model);
+            }
             default -> throw new IllegalArgumentException(
-                    "Unsupported LLM_PROVIDER '" + provider + "' — supported values: fake, ollama, anthropic");
+                    "Unsupported LLM_PROVIDER '" + provider + "' — supported values: fake, ollama, anthropic, deepseek");
         };
 
         String mode = ConfigResolver.resolve(modeFlag, System.getenv("DIAGNOSIS_MODE"), fileConfig, "DIAGNOSIS_MODE", "baseline");
