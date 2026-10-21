@@ -146,7 +146,16 @@ public record AgentDecision(
                     arguments.put(key, args.get(key));
                 }
             }
-            String name = json.optString("tool", json.optString("toolName", ""));
+            String name = json.optString("tool", json.optString("toolName",
+                    json.optString("name", json.optString("tool_name", ""))));
+            if (name.isBlank()) {
+                // Real models key the tool under varying conventions; a blank name is
+                // unparseable output (bounded retry — the live model reformats), not a
+                // deterministic contract breach. Fakes replay identical violations, but
+                // after the retries still fail with this explicit message.
+                throw new JSONException("tool call missing tool name"
+                        + " (looked for tool/toolName/name/tool_name keys)");
+            }
             return toolCall(name, arguments, json.optString("hypothesis", ""));
         }
         List<String> evidence = new ArrayList<>();

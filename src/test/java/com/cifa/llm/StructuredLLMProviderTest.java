@@ -83,6 +83,22 @@ class StructuredLLMProviderTest {
     }
 
     @Test
+    void toolCallNameAliasesParseAndBlankNameIsRetriablyUnparseable() {
+        // Real-model finding: live models key the tool under other conventions
+        // ("name", "tool_name"); only tool/toolName used to be recognized, and a
+        // blank name escaped as IllegalArgumentException = instant MODEL_FAILURE.
+        for (String key : new String[]{"tool", "toolName", "name", "tool_name"}) {
+            AgentDecision decision = AgentDecision.fromJson(
+                    "{\"type\":\"tool_call\",\"" + key + "\":\"source_location\",\"arguments\":{}}");
+            assertEquals("source_location", decision.toolName(), "alias key: " + key);
+        }
+
+        org.json.JSONException blank = assertThrows(org.json.JSONException.class,
+                () -> AgentDecision.fromJson("{\"type\":\"tool_call\",\"arguments\":{}}"));
+        assertTrue(blank.getMessage().contains("tool name"), blank.getMessage());
+    }
+
+    @Test
     void deeplyNestedJsonIsRejectedBeforeRecursiveParsing() {
         // org.json 20240303 has NO depth guard: deep enough input would end in
         // StackOverflowError, an Error no catch in the loop can hold. fromJson

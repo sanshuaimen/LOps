@@ -77,18 +77,34 @@ class ModelFailurePolicyTest {
     }
 
     @Test
-    void decisionContractViolationIsNotRetried() {
+    void blankToolNameIsRetriedAsUnparseableAndCanRecover() {
         FakeLLMProvider provider = new FakeLLMProvider();
-        // Parses as a tool_call with a blank tool name -> IllegalArgumentException inside the provider.
+        // Parses as a tool_call with a blank tool name -> JSONException inside the
+        // provider (real models key the tool under other conventions; live models
+        // reformat on retry — the old instant-contract-kill was fake-only logic).
         provider.enqueueRaw("{\"type\":\"tool_call\",\"arguments\":{}}");
-        provider.enqueue(AgentDecision.unknown("never reached"));
+        provider.enqueue(AgentDecision.unknown("no actionable evidence"));
+        InvestigationAgentLoop loop = loop(provider);
+
+        InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop);
+
+        assertEquals(AgentStopReason.INSUFFICIENT_EVIDENCE, outcome.stopReason());
+        assertEquals(2, provider.requests().size(), "blank tool name gets a bounded retry that can recover");
+    }
+
+    @Test
+    void blankToolNameOnEveryAttemptStillEndsInModelFailure() {
+        FakeLLMProvider provider = new FakeLLMProvider();
+        provider.enqueueRaw("{\"type\":\"tool_call\",\"arguments\":{}}");
+        provider.enqueueRaw("{\"type\":\"tool_call\",\"arguments\":{}}");
+        provider.enqueueRaw("{\"type\":\"tool_call\",\"arguments\":{}}");
         InvestigationAgentLoop loop = loop(provider);
 
         InvestigationAgentLoop.AgentOutcome outcome = runQuietly(loop);
 
         assertEquals(AgentStopReason.MODEL_FAILURE, outcome.stopReason());
         assertNull(outcome.diagnosis());
-        assertEquals(1, provider.requests().size(), "contract violation must not be retried");
+        assertEquals(3, provider.requests().size(), "modelRetries(2) + 1 attempts before giving up");
     }
 
     @Test
