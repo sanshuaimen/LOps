@@ -1,0 +1,14 @@
+> Task :gateway:test
+
+com.example.gateway.GatewayClientTest > fetchUnderLoad FAILED
+java.lang.AssertionError: Expected test to be finite, but it timed out after 5000 milliseconds
+	at com.example.gateway.GatewayClientTest.fetchUnderLoad(GatewayClientTest.java:17)
+	at java.base/java.util.ArrayList.forEach(Unknown Source)
+
+1 test completed, 1 failed
+
+> Task :gateway:test FAILED
+
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':gateway:test'.

@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "timed out"},
+    "hypothesis": "one module timed out after clean siblings; grab the timeout line"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.connector.WebhookSinkTest.deliversWithinDeadline"},
+    "hypothesis": "a connect timeout under load is a network-shaped flake candidate; history decides"
+  },
+  {
+    "type": "submit",
+    "category": "INFRA_FLAKY",
+    "rootCause": "WebhookSinkTest.deliversWithinDeadline hit a connect timeout against the webhook sink (timed out after 30 s); history shows repeated failures with clean reruns and no related commit — the sandbox sink stalls, this is infrastructure flake",
+    "evidenceIds": ["LOG-001", "LOG-002", "FLAKY-001"],
+    "confidence": 81,
+    "suggestedAction": "retry or quarantine the connector module run; probe the webhook sink endpoint before treating it as a regression"
+  }
+]

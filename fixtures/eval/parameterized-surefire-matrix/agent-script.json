@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "surefire_report",
+    "arguments": {},
+    "hypothesis": "the console only has the count; the XML shows which parameter rows failed and from which frame"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/matrix/DiscountMatrix.java", "startLine": 14, "endLine": 21},
+    "hypothesis": "round() truncates to one decimal instead of cents"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "DiscountMatrix.round truncates to one decimal via setScale(1, RoundingMode.DOWN) instead of cents, so parameter rows [2] and [4] get 36.40/89.90 where one-decimal-free expectations demand 36.45/89.99 — the rounding scale is the bug",
+    "evidenceIds": ["LOG-001", "TEST-001", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "round to two decimals with RoundingMode.HALF_UP in DiscountMatrix.round"
+  }
+]

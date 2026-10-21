@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "gradle-compile-symbol",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["CartTotals", "cannot find symbol"],
+  "evidenceLocators": ["Ledger.java:41"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

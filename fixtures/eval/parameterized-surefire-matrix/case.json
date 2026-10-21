@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "parameterized-surefire-matrix",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["setScale", "one decimal"],
+  "evidenceLocators": ["DiscountMatrix.java:20"],
+  "relevantTools": ["surefire_report", "source_location"]
+}

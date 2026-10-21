@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NullPointerException"},
+    "hypothesis": "two modules ran clean; the checkout module stack is the signal — pull it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/checkout/CheckoutTotals.java", "startLine": 24, "endLine": 34},
+    "hypothesis": "applyLoyaltyDiscount dereferences the SILVER rate that the warmup map never loaded"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the loyalty warmup map only loads GOLD, so CheckoutTotals.applyLoyaltyDiscount gets a null rate for tier SILVER and dereferences it at CheckoutTotals.java:31 (NullPointerException)",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 83,
+    "suggestedAction": "load the SILVER tier during warmup or null-guard the rate lookup in applyLoyaltyDiscount"
+  }
+]

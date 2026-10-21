@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "multi-module-failure-first-order",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["cache", "closed"],
+  "evidenceLocators": ["QueryPlanner.java:45"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

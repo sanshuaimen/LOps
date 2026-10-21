@@ -83,11 +83,11 @@ class EvalCorpusTest {
 
         Map<String, Long> counts = cases.stream()
                 .collect(Collectors.groupingBy(GoldenCase::layer, Collectors.counting()));
-        // Floors lock the 5a layering of the 33-case corpus; a later batch must not
-        // quietly hollow out a layer (accept = path-sensitive acceptance set).
+        // Floors lock the 5b expansion of the corpus (52 cases); a later batch must
+        // not quietly hollow out a layer (accept = path-sensitive acceptance set).
         assertTrue(counts.getOrDefault("accept", 0L) >= 14, "accept floor: " + counts);
-        assertTrue(counts.getOrDefault("regression", 0L) >= 9, "regression floor: " + counts);
-        assertTrue(counts.getOrDefault("robustness", 0L) >= 8, "robustness floor: " + counts);
+        assertTrue(counts.getOrDefault("regression", 0L) >= 19, "regression floor: " + counts);
+        assertTrue(counts.getOrDefault("robustness", 0L) >= 17, "robustness floor: " + counts);
         assertTrue(counts.getOrDefault("security", 0L) >= 2, "security floor: " + counts);
         assertEquals(Set.copyOf(GoldenCase.knownLayers()), counts.keySet(),
                 "every known layer must be present; counts=" + counts);

@@ -1,0 +1,10 @@
+{
+  "com.example.gateway.GatewayClientTest.fetchUnderLoad": [
+    {"build": "g-201", "passed": true},
+    {"build": "g-202", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "g-203", "passed": true},
+    {"build": "g-204", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "g-205", "passed": true},
+    {"build": "g-206", "passed": false, "rerunPassed": true, "relatedCommit": ""}
+  ]
+}

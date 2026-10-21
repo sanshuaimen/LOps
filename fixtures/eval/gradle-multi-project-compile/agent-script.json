@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "printHeader"},
+    "hypothesis": "the billing subproject compile failure names the mismatched method; pull the javac diagnostic"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/billing/InvoicePrinter.java", "startLine": 15, "endLine": 25},
+    "hypothesis": "printHeader takes two strings but printTotals passes the BigDecimal total at line 23"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "billing compileJava: printTotals passes a BigDecimal total into printHeader(String,String) at InvoicePrinter.java:23 — argument types diverged when the header signature switched to a formatted number string",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "format the total with toPlainString() at the call site or add a printHeader(BigDecimal,String) overload"
+  }
+]

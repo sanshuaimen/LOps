@@ -1,0 +1,15 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ catalog ---
+[INFO] Running com.example.catalog.CatalogScanTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Running com.example.catalog.IndexShardTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+[INFO]
+[INFO] --- maven-surefire-plugin:3.2.5:test @ checkout ---
+[INFO] Running com.example.checkout.CheckoutTotalsTest
+[ERROR] Tests run: 3, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.4 s <<< FAILURE! - in com.example.checkout.CheckoutTotalsTest
+[ERROR] applyLoyaltyDiscount  Time elapsed: 0.1 s  <<< ERROR!
+java.lang.NullPointerException: loyalty tier map has no entry for tier SILVER
+	at com.example.checkout.CheckoutTotals.applyLoyaltyDiscount(CheckoutTotals.java:31)
+	at com.example.checkout.LoyaltyPolicy.currentRate(LoyaltyPolicy.java:22)
+	at com.example.checkout.CheckoutTotalsTest.applyLoyaltyDiscount(CheckoutTotalsTest.java:12)
+[INFO] BUILD FAILURE

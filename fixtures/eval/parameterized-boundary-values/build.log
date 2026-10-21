@@ -1,0 +1,11 @@
+[INFO] Running com.example.boundary.LimitsTest
+[ERROR] Tests run: 12, Failures: 2, Errors: 0, Skipped: 0, Time elapsed: 0.5 s <<< FAILURE! - in com.example.boundary.LimitsTest
+[ERROR] acceptsWithinLimit[6]  Time elapsed: 0.0 s  <<< FAILURE!
+java.lang.AssertionError: boundary 100 accepted 101
+	at com.example.boundary.LimitsTest.acceptsWithinLimit(LimitsTest.java:11)
+[INFO] 6 of 12 parameter combinations passed before the boundary case
+[INFO] continuing parameter sweep...
+[ERROR] acceptsWithinLimit[12]  Time elapsed: 0.0 s  <<< FAILURE!
+java.lang.AssertionError: boundary 100 accepted 101
+	at com.example.boundary.LimitsTest.acceptsWithinLimit(LimitsTest.java:11)
+[INFO] BUILD FAILURE

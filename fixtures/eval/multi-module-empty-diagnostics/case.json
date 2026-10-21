@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "multi-module-empty-diagnostics",
+  "expectedCategory": "UNKNOWN",
+  "shouldBeUnknown": true,
+  "forbiddenConclusions": ["apply this fix", "database pool"],
+  "relevantTools": ["failure_evidence"]
+}

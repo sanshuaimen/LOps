@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "settlement buffer overflows"},
+    "hypothesis": "38 passing combo lines pad the log; keyword extraction jumps straight to the one exception"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/settle/SettlementBuffer.java", "startLine": 29, "endLine": 34},
+    "hypothesis": "flush throws when rows remain after the drain"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "flush() throws settlement buffer overflows when rows remain after the drain (SettlementBuffer.java:33); combo 0039 flushed without draining first",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "drain the settlement buffer before flush in the combo loop, or make flush drain defensively"
+  }
+]

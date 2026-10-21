@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "gradle-dependency-unresolved",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["pricing-lib"],
+  "evidenceLocators": ["pricing-lib"],
+  "relevantTools": ["failure_evidence"]
+}

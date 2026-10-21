@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "boundary 100 accepted"},
+    "hypothesis": "the boundary sweep rows [6] and [12] share one assertion message; pull it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/boundary/Limits.java", "startLine": 11, "endLine": 19},
+    "hypothesis": "accepts uses value <= maxValue + 1 — an off-by-one at the boundary"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "off-by-one in Limits.accepts: value <= maxValue + 1 lets boundary+1 through, so the boundary probes 101 against limit 100 fail with 'boundary 100 accepted 101'",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 85,
+    "suggestedAction": "use value <= maxValue in Limits.accepts"
+  }
+]

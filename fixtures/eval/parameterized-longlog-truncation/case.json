@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "parameterized-longlog-truncation",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["settlement buffer", "drain"],
+  "evidenceLocators": ["settlement buffer overflows"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

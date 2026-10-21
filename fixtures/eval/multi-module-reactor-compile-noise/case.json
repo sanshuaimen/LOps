@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "multi-module-reactor-compile-noise",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["VAT_RATE", "cannot find symbol"],
+  "evidenceLocators": ["RateCard.java"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

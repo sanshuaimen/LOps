@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "parameterized-boundary-values",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["off-by-one", "maxValue"],
+  "evidenceLocators": ["boundary 100 accepted"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

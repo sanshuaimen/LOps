@@ -1,0 +1,13 @@
+[INFO] Running com.example.geo.DeliveryZoneTest
+[ERROR] Tests run: 5, Failures: 0, Errors: 3, Skipped: 0, Time elapsed: 1.2 s <<< FAILURE! - in com.example.geo.DeliveryZoneTest
+[ERROR] coversAddress[1]  Time elapsed: 0.4 s  <<< ERROR!
+java.lang.NullPointerException: zone registry missing coverage for postal 94
+	at com.example.geo.DeliveryZone.covers(DeliveryZone.java:27)
+	at com.example.geo.DeliveryZoneTest.coversAddress(DeliveryZoneTest.java:15)
+[INFO] running remaining parameter combinations
+[ERROR] coversAddress[2]  Time elapsed: 0.3 s  <<< ERROR!
+java.lang.NullPointerException: zone registry missing coverage for postal 94
+	at com.example.geo.DeliveryZone.covers(DeliveryZone.java:27)
+	at com.example.geo.DeliveryZoneTest.coversAddress(DeliveryZoneTest.java:15)
+[INFO] Errors: 3
+[INFO] BUILD FAILURE

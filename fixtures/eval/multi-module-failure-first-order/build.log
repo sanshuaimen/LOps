@@ -1,0 +1,13 @@
+[INFO] --- maven-surefire-plugin:3.2.5:test @ search ---
+[ERROR] Tests run: 2, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.3 s <<< FAILURE! - in com.example.search.QueryPlannerTest
+[ERROR] plansBooleanQuery  Time elapsed: 0.2 s  <<< ERROR!
+java.lang.IllegalStateException: planner cache closed before drain
+	at com.example.search.QueryPlanner.planBoolean(QueryPlanner.java:45)
+	at com.example.search.QueryPlannerTest.plansBooleanQuery(QueryPlannerTest.java:11)
+[INFO]
+[INFO] --- maven-surefire-plugin:3.2.5:test @ indexing ---
+[INFO] Running com.example.indexing.ShardIndexTest
+[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Running com.example.indexing.TokenizerTest
+[INFO] Tests run: 41, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE

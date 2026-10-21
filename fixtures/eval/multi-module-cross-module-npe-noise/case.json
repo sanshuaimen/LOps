@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "multi-module-cross-module-npe-noise",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["SILVER", "null"],
+  "evidenceLocators": ["CheckoutTotals.java:31"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

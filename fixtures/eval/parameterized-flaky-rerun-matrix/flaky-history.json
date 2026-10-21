@@ -1,0 +1,11 @@
+{
+  "com.example.queue.PurgeSweepTest.purgeExpiredBatch": [
+    {"build": "q-701", "passed": true},
+    {"build": "q-702", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "q-703", "passed": true},
+    {"build": "q-704", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "q-705", "passed": true},
+    {"build": "q-706", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "q-707", "passed": true}
+  ]
+}

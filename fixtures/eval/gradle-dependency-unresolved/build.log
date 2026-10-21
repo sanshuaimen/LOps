@@ -1,0 +1,15 @@
+> Task :app:compileJava FAILED
+
+FAILURE: Build failed with an exception.
+* What went wrong:
+Could not resolve all files for configuration ':app:runtimeClasspath'.
+> Could not find com.example:pricing-lib:2.3.0.
+  Searched in the following locations:
+    - https://repo.maven.apache.org/maven2/com/example/pricing-lib/2.3.0/pricing-lib-2.3.0.pom
+    - https://repo.example.com/releases/com/example/pricing-lib/2.3.0/pricing-lib-2.3.0.pom
+Required by:
+    project :app
+
+* Try:
+Run with --stacktrace option to get the stack trace.
+Run with --info or --debug option to get more log output.

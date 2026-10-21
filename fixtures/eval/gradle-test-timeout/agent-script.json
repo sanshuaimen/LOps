@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "timed out"},
+    "hypothesis": "the deadline breach message says how long the test waited; capture it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.gateway.GatewayClientTest.fetchUnderLoad"},
+    "hypothesis": "a load-shaped deadline breach is a flaky candidate; the history source decides, not the stack"
+  },
+  {
+    "type": "submit",
+    "category": "INFRA_FLAKY",
+    "rootCause": "GatewayClientTest.fetchUnderLoad hit the 5000 ms deadline (timed out) inside the audit call; flaky history shows repeated failures with clean reruns and no related commit — an environment-bound timeout, not a code regression",
+    "evidenceIds": ["LOG-001", "LOG-002", "FLAKY-001"],
+    "confidence": 80,
+    "suggestedAction": "quarantine or raise the deadline for fetchUnderLoad; check upstream latency under load before treating it as a regression"
+  }
+]

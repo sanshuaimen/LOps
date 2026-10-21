@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "parameterized-repeated-stack-noise",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["registry", "null"],
+  "evidenceLocators": ["DeliveryZone.java:27"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

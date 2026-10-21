@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "gradle-multi-project-compile",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["printHeader", "BigDecimal"],
+  "evidenceLocators": ["InvoicePrinter.java:23"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

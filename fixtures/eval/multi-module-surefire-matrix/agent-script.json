@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "surefire_report",
+    "arguments": {},
+    "hypothesis": "the console only shows the module summary; the surefire XML holds the assertion and the production frame"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/payments/RefundService.java", "startLine": 13, "endLine": 22},
+    "hypothesis": "refundCents subtracts a fee entry that defaults to the full amount, zeroing the refund"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "RefundService.refundCents subtracts the fee table entry, but a payment missing from the fee table defaults to the full requested amount, so approved refunds settle to 0 (expected refund 2500)",
+    "evidenceIds": ["LOG-001", "TEST-001", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "default the missing fee entry to 0, not to the requested amount"
+  }
+]

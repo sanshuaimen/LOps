@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "parameterized-xml-systemout-noise",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["suffix", "en-US"],
+  "evidenceLocators": ["InvoiceRenderTest.java:17"],
+  "relevantTools": ["surefire_report", "source_location"]
+}

@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "multi-module-surefire-matrix",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["fee", "0"],
+  "evidenceLocators": ["RefundService.java:24"],
+  "relevantTools": ["surefire_report", "source_location"]
+}

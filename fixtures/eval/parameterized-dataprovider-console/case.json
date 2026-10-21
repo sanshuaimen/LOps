@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "parameterized-dataprovider-console",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["divide by zero", "stride"],
+  "evidenceLocators": ["Factorizer.java:14"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

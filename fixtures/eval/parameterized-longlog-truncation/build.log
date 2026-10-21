@@ -1,0 +1,44 @@
+[INFO] matrix sweep starting: 40 parameter combinations
+[INFO] combo 0001 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0002 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0003 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0004 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0005 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0006 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0007 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0008 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0009 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0010 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0011 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0012 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0013 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0014 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0015 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0016 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0017 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0018 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0019 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0020 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0021 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0022 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0023 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0024 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0025 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0026 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0027 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0028 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0029 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0030 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0031 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0032 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0033 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0034 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0035 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0036 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0037 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+[INFO] combo 0038 ok rows=512 digest=a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5a3f9c2e1b7d5
+java.lang.IllegalStateException: settlement buffer overflows for combo 0039 at row 512
+	at com.example.settle.SettlementBuffer.flush(SettlementBuffer.java:33)
+	at com.example.settle.SettlementBufferTest.drainsSettlement(SettlementBufferTest.java:15)
+[INFO] combo 0040 aborted
+[INFO] BUILD FAILURE

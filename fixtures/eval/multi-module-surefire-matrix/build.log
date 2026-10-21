@@ -1,0 +1,7 @@
+[INFO] Reactor Summary:
+[INFO] common ......................................... SUCCESS [ 0.6 s]
+[INFO] payments ....................................... FAILURE [ 1.9 s]
+[INFO] web ............................................ SKIPPED
+[INFO] --- maven-surefire-plugin:3.2.5:test @ payments ---
+[ERROR] Tests run: 3, Failures: 1, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE

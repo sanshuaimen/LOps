@@ -1,0 +1,16 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "pricing-lib"},
+    "hypothesis": "the Gradle resolution failure names the coordinates it could not find; pull those lines as evidence"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "the app build declares com.example:pricing-lib:2.3.0 but neither central nor the internal releases repository provides that version (could not find)",
+    "evidenceIds": ["LOG-001", "LOG-002"],
+    "confidence": 83,
+    "suggestedAction": "publish pricing-lib 2.3.0 or pin the build to an existing published version"
+  }
+]

@@ -1,0 +1,14 @@
+> Task :app:test
+
+com.example.cart.CartServiceTest > applyDiscountForPremium FAILED
+java.lang.NullPointerException: campaign rule is null for premium totals
+	at com.example.cart.CartService.applyDiscount(CartService.java:14)
+	at com.example.cart.CartServiceTest.applyDiscountForPremium(CartServiceTest.java:9)
+
+1 test completed, 1 failed
+
+> Task :app:test FAILED
+
+FAILURE: Build failed with an exception.
+* What went wrong:
+Execution failed for task ':app:test'.

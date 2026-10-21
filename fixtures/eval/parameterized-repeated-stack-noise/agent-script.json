@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "zone registry"},
+    "hypothesis": "three parameter rows repeat the identical stack; one pull captures the shared message"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/geo/DeliveryZone.java", "startLine": 22, "endLine": 28},
+    "hypothesis": "covers dereferences zones.get(district) without a null guard at line 27"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the registry only maps central-district, so DeliveryZone.covers dereferences a null zone from zones.get(district) at DeliveryZone.java:27 for every other district row",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "null-guard the zones.get result or register the remaining districts in the test registry"
+  }
+]

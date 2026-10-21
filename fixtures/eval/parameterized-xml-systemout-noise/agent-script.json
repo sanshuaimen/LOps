@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "surefire_report",
+    "arguments": {},
+    "hypothesis": "the failing parameter row and its assertion live in the surefire XML amid render-trace system-out noise"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/report/InvoiceRender.java", "startLine": 17, "endLine": 24},
+    "hypothesis": "totalsLine only appends the tax suffix for non-en locales"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "InvoiceRender.totalsLine appends the '(incl. tax)' suffix only for non-en locales; en-US invoices with tax render without the suffix so rendersTotals[2] fails its assertion at InvoiceRenderTest.java:17",
+    "evidenceIds": ["LOG-001", "TEST-001", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "append the suffix whenever tax is present, regardless of locale"
+  }
+]

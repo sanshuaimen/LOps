@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the reactor log shows only the failing module; the javac line names the symbol"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/billing/RateCard.java", "startLine": 15, "endLine": 19},
+    "hypothesis": "withVat multiplies by VAT_RATE which moved to BillingConstants during the vat split"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "billing module compile: RateCard.withVat references VAT_RATE (cannot find symbol) — the constant moved to BillingConstants when the vat split landed and the qualified reference was never updated",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 85,
+    "suggestedAction": "import BillingConstants.VAT_RATE in RateCard or restore the constant locally"
+  }
+]

@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "IllegalStateException"},
+    "hypothesis": "the failing module comes first in this reactor; pull its stack before the passing-module noise"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/search/QueryPlanner.java", "startLine": 41, "endLine": 47},
+    "hypothesis": "drain throws when the cache was closed before the boolean plan ran"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the test closes the planner cache and then runs planBoolean, whose drain() rejects a closed cache — IllegalStateException at QueryPlanner.java:45 (planner cache closed before drain)",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 83,
+    "suggestedAction": "reopen the cache before planBoolean in the test, or make drain() tolerate a closed cache"
+  }
+]

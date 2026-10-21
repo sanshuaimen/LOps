@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "NullPointerException"},
+    "hypothesis": "the Gradle test task printed the raw stack; pull the exception line"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/cart/CartService.java", "startLine": 1, "endLine": 17},
+    "hypothesis": "line 14 dereferences the null campaign rule returned by CampaignRules.forTier"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "CartServiceTest.applyDiscountForPremium asks CampaignRules.forTier for the premium tier; the table only knows 'standard', forTier returns null, and CartService.applyDiscount dereferences it at line 14 (CartService.java:14)",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "add the premium tier to CampaignRules or null-guard the forTier result in applyDiscount"
+  }
+]

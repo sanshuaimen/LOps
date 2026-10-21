@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "surefire_report",
+    "arguments": {},
+    "hypothesis": "the express row and its retry duplicate fail identically; the XML gives the shared assertion"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/rate/ShippingRate.java", "startLine": 22, "endLine": 24},
+    "hypothesis": "expressSurcharge is a stub returning 0, zeroing express quotes"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "express quotes come back 0 because expressSurcharge is a stubbed TODO returning 0 (ShippingRate.java:23); the express row and its retry both expect 1200",
+    "evidenceIds": ["LOG-001", "TEST-001", "SRC-001"],
+    "confidence": 84,
+    "suggestedAction": "wire the weight table into expressSurcharge instead of returning 0"
+  }
+]

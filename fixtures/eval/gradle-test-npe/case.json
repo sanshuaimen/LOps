@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "gradle-test-npe",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["campaign", "null"],
+  "evidenceLocators": ["CartService.java:14"],
+  "relevantTools": ["source_location", "failure_evidence"]
+}

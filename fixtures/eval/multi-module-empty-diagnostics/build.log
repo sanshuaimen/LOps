@@ -1,0 +1,9 @@
+[INFO] Scanning for projects...
+[INFO] Reactor Build Order:
+[INFO] api ............................................. SUCCESS [ 0.8 s]
+[INFO] worker .......................................... FAILURE [ 0.1 s]
+[INFO] web ............................................. SKIPPED
+[INFO] Build summary shows worker failed; no diagnostics were captured.
+[INFO] The worker module exited before writing surefire reports.
+[INFO] BUILD FAILURE
+[INFO] Total time:  1.6 s

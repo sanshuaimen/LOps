@@ -1,0 +1,8 @@
+{
+  "layer": "regression",
+  "id": "parameterized-cross-suite-repeat",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["expressSurcharge", "0"],
+  "evidenceLocators": ["expressSurcharge"],
+  "relevantTools": ["surefire_report", "source_location"]
+}
