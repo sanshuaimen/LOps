@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "IllegalStateException"},
+    "hypothesis": "binary pack garbage precedes the real stack; keyword extraction skips it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/i18n/BundleLoader.java", "startLine": 22, "endLine": 32},
+    "hypothesis": "load() throws when the pack section is missing its magic header"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the de-DE resource pack was torn mid-write, so BundleLoader.load finds no magic header and throws 'resource bundle truncated mid-entry' at BundleLoader.java:29",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 83,
+    "suggestedAction": "re-pack the de-DE resource bundle and add a length checksum to the packer"
+  }
+]

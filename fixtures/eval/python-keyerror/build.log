@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/ci/src/orders.py", line 7, in apply_discount
+    rate = CAMPAIGNS[tier]["rate"]
+KeyError: 'silver'

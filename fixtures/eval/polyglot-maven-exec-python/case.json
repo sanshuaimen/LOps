@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "polyglot-maven-exec-python",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["JSONDecodeError", "schema.json"],
+  "evidenceLocators": ["export_features.py"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

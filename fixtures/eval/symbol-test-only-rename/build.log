@@ -1,0 +1,5 @@
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project orders: Compilation failure
+[ERROR] /data/jobs/orders/src/test/java/com/example/orders/OrderReporterTest.java:[8,18] cannot find symbol
+[ERROR]   symbol:   variable legacyTotal
+[ERROR]   location: class com.example.orders.OrderReporter
+[INFO] BUILD FAILURE

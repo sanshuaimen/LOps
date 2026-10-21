@@ -1,0 +1,7 @@
+[INFO] Running com.example.reporting.DailyRollupTest
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 1.1 s <<< FAILURE! - in com.example.reporting.DailyRollupTest
+[ERROR] rollsUpTodayBucket  Time elapsed: 0.9 s  <<< FAILURE!
+java.lang.AssertionError: rollup window drifted (timed out waiting for the day bucket to close)
+	at com.example.reporting.DailyRollup.todayBucket(DailyRollup.java:28)
+	at com.example.reporting.DailyRollupTest.rollsUpTodayBucket(DailyRollupTest.java:11)
+[INFO] BUILD FAILURE

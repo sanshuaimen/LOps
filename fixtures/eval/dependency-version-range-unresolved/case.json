@@ -1,0 +1,9 @@
+{
+  "layer": "accept",
+  "id": "dependency-version-range-unresolved",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["analytics-sdk"],
+  "evidenceLocators": ["analytics-sdk"],
+  "requiredTools": ["dependency_analysis"],
+  "relevantTools": ["dependency_analysis"]
+}

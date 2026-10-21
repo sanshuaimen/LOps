@@ -1,0 +1,11 @@
+{
+  "com.example.session.SessionCacheTest.evictsAfterTtl": [
+    {"build": "s-301", "passed": true},
+    {"build": "s-302", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "s-303", "passed": true},
+    {"build": "s-304", "passed": true},
+    {"build": "s-305", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "s-306", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "s-307", "passed": true}
+  ]
+}

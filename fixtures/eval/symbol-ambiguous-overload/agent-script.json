@@ -1,0 +1,28 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "ambiguous"},
+    "hypothesis": "javac names both candidate signatures; pull the pair of diagnostic lines"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_symbol_search",
+    "arguments": {"symbol": "format"},
+    "hypothesis": "the repo-wide symbol view separates our format helpers from String.format — the ambiguity is at the call site, not a missing symbol"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/main/java/com/example/billing/StatementRenderer.java", "startLine": 23, "endLine": 27},
+    "hypothesis": "row() passes Object[] raw, which matches both the varargs and the single-Object overload"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "StatementRenderer.row passes Object[] directly into String.format: the raw array matches both format(String,Object...) and format(String,Object), so the call at StatementRenderer.java:26 is ambiguous (reference to format is ambiguous)",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001", "SRC-002"],
+    "confidence": 84,
+    "suggestedAction": "wrap the details array as a single Object argument, e.g. format(template, (Object) details), or build the varargs explicitly"
+  }
+]

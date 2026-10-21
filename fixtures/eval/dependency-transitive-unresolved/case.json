@@ -1,0 +1,9 @@
+{
+  "layer": "accept",
+  "id": "dependency-transitive-unresolved",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["telemetry-core"],
+  "evidenceLocators": ["telemetry-core"],
+  "requiredTools": ["dependency_analysis"],
+  "relevantTools": ["dependency_analysis"]
+}

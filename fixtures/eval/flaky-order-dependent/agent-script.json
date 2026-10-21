@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "timed out"},
+    "hypothesis": "the TTL sweep message carries the budget breach; capture it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.session.SessionCacheTest.evictsAfterTtl"},
+    "hypothesis": "the sweep only breaches under the full suite, which points at shared state; history decides"
+  },
+  {
+    "type": "submit",
+    "category": "INFRA_FLAKY",
+    "rootCause": "evictsAfterTtl shares the suite-wide SessionCache; when earlier tests pre-populate it the TTL sweep overruns its 2000 ms budget (timed out) and the assertion fires — reruns in isolation pass and history shows clean reruns with no related commit",
+    "evidenceIds": ["LOG-001", "LOG-002", "FLAKY-001"],
+    "confidence": 80,
+    "suggestedAction": "give evictsAfterTtl a fresh SessionCache or move the sweep budget to a before-hook reset"
+  }
+]

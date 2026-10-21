@@ -1,0 +1,6 @@
+[INFO] Packaging resources for locales: en, de, ja
+[1a[0m[31m<BINARY-SECTION: 0x89 0x50 0x4E 0x47 0x0D 0x0A ... 2148 bytes truncated>[0m
+java.lang.IllegalStateException: resource bundle truncated mid-entry for de-DE
+	at com.example.i18n.BundleLoader.load(BundleLoader.java:29)
+	at com.example.i18n.BundleLoaderTest.loadResumes(BundleLoaderTest.java:12)
+[INFO] BUILD FAILURE

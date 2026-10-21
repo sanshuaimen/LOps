@@ -1,0 +1,9 @@
+{
+  "layer": "accept",
+  "id": "symbol-test-only-rename",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["legacytotal", "grandtotal"],
+  "evidenceLocators": ["cannot find symbol", "legacyTotal"],
+  "requiredTools": ["source_symbol_search"],
+  "relevantTools": ["source_symbol_search", "failure_evidence"]
+}

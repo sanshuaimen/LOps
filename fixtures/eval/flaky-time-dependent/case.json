@@ -1,0 +1,9 @@
+{
+  "layer": "accept",
+  "id": "flaky-time-dependent",
+  "expectedCategory": "INFRA_FLAKY",
+  "rootCauseKeywords": ["timed out"],
+  "evidenceLocators": ["timed out", "DailyRollupTest.rollsUpTodayBucket"],
+  "requiredTools": ["flaky_history"],
+  "relevantTools": ["flaky_history", "failure_evidence"]
+}

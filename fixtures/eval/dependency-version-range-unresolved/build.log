@@ -1,0 +1,2 @@
+[ERROR] Could not resolve dependencies for project com.example:insights:jar:1.2.0: Could not find artifact com.example:analytics-sdk:jar:[2.0.0,3.0.0) in central
+[INFO] BUILD FAILURE

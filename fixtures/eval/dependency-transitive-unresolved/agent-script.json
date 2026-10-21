@@ -1,0 +1,16 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "the web pom itself only declares analytics-sdk; the missing artifact is transitive — the POM view confirms the chain"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "web declares analytics-sdk 2.1.0, whose own dependency telemetry-core 1.0.2 is absent from every configured repository — a transitive resolution failure, not a web pom typo",
+    "evidenceIds": ["LOG-001", "DEP-001"],
+    "confidence": 83,
+    "suggestedAction": "upgrade analytics-sdk to a release whose telemetry-core exists, or add an exclusion plus a direct telemetry-core dependency"
+  }
+]

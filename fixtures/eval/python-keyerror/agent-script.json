@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "KeyError"},
+    "hypothesis": "the python traceback names the missing campaign tier; pull the exception line"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/orders.py", "startLine": 1, "endLine": 8},
+    "hypothesis": "the CAMPAIGNS table shows which tiers exist and which one is missing"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "CAMPAIGNS only maps gold and bronze, so apply_discount raises KeyError: 'silver' at orders.py:7 when a silver-tier order requests its rate",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 83,
+    "suggestedAction": "add the silver tier to CAMPAIGNS or fall back to a default rate with .get()"
+  }
+]

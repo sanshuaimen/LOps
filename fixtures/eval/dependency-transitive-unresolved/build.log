@@ -1,0 +1,2 @@
+[ERROR] Could not resolve dependencies for project com.example:web:jar:1.0.0: Failed to collect dependencies at com.example:analytics-sdk:jar:2.1.0 -> com.example:telemetry-core:jar:1.0.2: Could not find artifact com.example:telemetry-core:jar:1.0.2 in central
+[INFO] BUILD FAILURE

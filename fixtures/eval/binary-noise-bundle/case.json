@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "binary-noise-bundle",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["truncated", "de-DE"],
+  "evidenceLocators": ["BundleLoader.java:29"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

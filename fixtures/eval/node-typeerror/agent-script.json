@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "TypeError"},
+    "hypothesis": "the node stack names the property read that blew up; pull it"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "src/invoice.js", "startLine": 1, "endLine": 11},
+    "hypothesis": "formatTotals reads totals.total without guarding guest checkouts where totals is undefined"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "guest checkouts carry no totals object, so render passes undefined into formatTotals which reads totals.total at invoice.js:4 (TypeError: Cannot read properties of undefined)",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 82,
+    "suggestedAction": "default totals to { total: 0 } in render or guard the property read in formatTotals"
+  }
+]

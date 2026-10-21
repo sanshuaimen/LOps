@@ -1,0 +1,12 @@
+{
+  "com.example.reporting.DailyRollupTest.rollsUpTodayBucket": [
+    {"build": "r-501", "passed": true},
+    {"build": "r-502", "passed": true},
+    {"build": "r-503", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "r-504", "passed": true},
+    {"build": "r-505", "passed": true},
+    {"build": "r-506", "passed": false, "rerunPassed": true, "relatedCommit": ""},
+    {"build": "r-507", "passed": true},
+    {"build": "r-508", "passed": false, "rerunPassed": true, "relatedCommit": ""}
+  ]
+}

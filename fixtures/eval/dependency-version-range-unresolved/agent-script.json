@@ -1,0 +1,16 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "dependency_analysis",
+    "arguments": {},
+    "hypothesis": "the pom declares a version range; confirm the range coordinates from the POM before naming the fix"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "insights declares com.example:analytics-sdk with the open version range [2.0.0,3.0.0); no repository publishes an artifact that satisfies the range, so resolution fails",
+    "evidenceIds": ["LOG-001", "DEP-001"],
+    "confidence": 84,
+    "suggestedAction": "pin analytics-sdk to a published release instead of the open [2.0.0,3.0.0) range"
+  }
+]

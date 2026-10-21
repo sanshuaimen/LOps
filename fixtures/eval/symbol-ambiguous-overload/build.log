@@ -1,0 +1,4 @@
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project billing: Compilation failure
+[ERROR] /data/jobs/billing/src/main/java/com/example/billing/StatementRenderer.java:[26,16] reference to format is ambiguous
+[ERROR]   both method format(String,Object...) in java.lang.String and method format(java.util.Locale,String,Object...) in java.lang.String match
+[INFO] BUILD FAILURE

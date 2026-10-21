@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "node-typeerror",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["undefined", "totals"],
+  "evidenceLocators": ["invoice.js:4"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

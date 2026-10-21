@@ -1,0 +1,9 @@
+{
+  "layer": "accept",
+  "id": "symbol-ambiguous-overload",
+  "expectedCategory": "DEPENDENCY_BUILD",
+  "rootCauseKeywords": ["ambiguous", "format"],
+  "evidenceLocators": ["format is ambiguous"],
+  "requiredTools": ["source_symbol_search"],
+  "relevantTools": ["source_symbol_search", "failure_evidence", "source_location"]
+}

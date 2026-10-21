@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "cannot find symbol"},
+    "hypothesis": "the testCompile failure names the symbol and the holder class"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_symbol_search",
+    "arguments": {"symbol": "grandTotal"},
+    "hypothesis": "production compiles fine, so the renamed field must still exist under a new name — search for it"
+  },
+  {
+    "type": "submit",
+    "category": "DEPENDENCY_BUILD",
+    "rootCause": "production renamed OrderReporter.legacyTotal to grandTotal and main sources migrated, but OrderReporterTest still reads legacyTotal at line 8 (cannot find symbol) — a test-only migration miss",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 85,
+    "suggestedAction": "update OrderReporterTest to read grandTotal"
+  }
+]

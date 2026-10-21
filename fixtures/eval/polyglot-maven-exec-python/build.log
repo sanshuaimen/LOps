@@ -1,0 +1,10 @@
+[INFO] --- exec-maven-plugin:3.1.0:exec (export-features) @ ml ---
+[INFO] python scripts/export_features.py schema.json
+Traceback (most recent call last):
+  File "scripts/export_features.py", line 11, in <module>
+    main(sys.argv[1:])
+  File "scripts/export_features.py", line 6, in main
+    schema = json.load(open(argv[1]))
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE

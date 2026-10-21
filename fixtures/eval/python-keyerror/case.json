@@ -1,0 +1,8 @@
+{
+  "layer": "robustness",
+  "id": "python-keyerror",
+  "expectedCategory": "LOGIC_ERROR",
+  "rootCauseKeywords": ["silver", "KeyError"],
+  "evidenceLocators": ["orders.py"],
+  "relevantTools": ["failure_evidence", "source_location"]
+}

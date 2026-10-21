@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "timed out"},
+    "hypothesis": "the day-bucket boundary is the suspect; the assertion message carries the drift"
+  },
+  {
+    "type": "tool_call",
+    "tool": "flaky_history",
+    "arguments": {"testName": "com.example.reporting.DailyRollupTest.rollsUpTodayBucket"},
+    "hypothesis": "a clock-boundary test should fail in clusters around the same hour; history decides"
+  },
+  {
+    "type": "submit",
+    "category": "INFRA_FLAKY",
+    "rootCause": "rollsUpTodayBucket asserts against the live clock: runs started within seconds of the UTC day boundary wait for the next bucket and the window check times out after the budget (timed out) — history shows failures clustered at the same hour with clean reruns, no related commit",
+    "evidenceIds": ["LOG-001", "LOG-002", "FLAKY-001"],
+    "confidence": 79,
+    "suggestedAction": "inject a fixed Clock into DailyRollup instead of reading the system time in the test path"
+  }
+]

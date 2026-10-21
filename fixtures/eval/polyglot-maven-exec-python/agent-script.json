@@ -1,0 +1,22 @@
+[
+  {
+    "type": "tool_call",
+    "tool": "failure_evidence",
+    "arguments": {"keyword": "JSONDecodeError"},
+    "hypothesis": "the maven exec step leaked a python traceback; the decode error is the real signal"
+  },
+  {
+    "type": "tool_call",
+    "tool": "source_location",
+    "arguments": {"path": "scripts/export_features.py", "startLine": 1, "endLine": 10},
+    "hypothesis": "json.load on an empty schema file is the crash line"
+  },
+  {
+    "type": "submit",
+    "category": "LOGIC_ERROR",
+    "rootCause": "the exec-bound export step reads schema.json which is empty in this checkout, so json.load raises JSONDecodeError at export_features.py:5",
+    "evidenceIds": ["LOG-001", "LOG-002", "SRC-001"],
+    "confidence": 81,
+    "suggestedAction": "regenerate schema.json before the export step or fail fast with a clear 'schema.json missing' check"
+  }
+]

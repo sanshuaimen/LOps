@@ -1,0 +1,4 @@
+TypeError: Cannot read properties of undefined (reading 'total')
+    at formatTotals (/ci/src/invoice.js:4:26)
+    at render (/ci/src/invoice.js:8:10)
+    at Object.<anonymous> (/ci/src/invoice.js:11:30)
