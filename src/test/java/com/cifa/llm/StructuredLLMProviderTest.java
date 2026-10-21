@@ -65,6 +65,24 @@ class StructuredLLMProviderTest {
     }
 
     @Test
+    void submitWithOffEnumCategoryIsUnparseableAndNamesTheAllowedSet() {
+        // Real-model finding (deepseek-flash eval): invented labels like
+        // DEPENDENCY_CONFLICT / TEST_BUG must bounce as unparseable output —
+        // the bounded retry sees the allowed set — never flow into scoring.
+        org.json.JSONException e = assertThrows(org.json.JSONException.class,
+                () -> AgentDecision.fromJson(
+                        "{\"type\":\"submit\",\"category\":\"DEPENDENCY_CONFLICT\",\"rootCause\":\"x\"}"));
+        assertTrue(e.getMessage().contains("DEPENDENCY_CONFLICT"), e.getMessage());
+        assertTrue(e.getMessage().contains("DEPENDENCY_BUILD"), e.getMessage());
+
+        for (String allowed : new String[]{"DEPENDENCY_BUILD", "LOGIC_ERROR", "INFRA_FLAKY", "UNKNOWN"}) {
+            AgentDecision decision = AgentDecision.fromJson(
+                    "{\"type\":\"submit\",\"category\":\"" + allowed + "\",\"rootCause\":\"x\"}");
+            assertEquals(allowed, decision.category());
+        }
+    }
+
+    @Test
     void deeplyNestedJsonIsRejectedBeforeRecursiveParsing() {
         // org.json 20240303 has NO depth guard: deep enough input would end in
         // StackOverflowError, an Error no catch in the loop can hold. fromJson

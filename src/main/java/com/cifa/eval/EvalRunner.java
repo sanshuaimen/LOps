@@ -81,7 +81,8 @@ public final class EvalRunner {
 
                 if (output.diagnosis() == null) {
                     results.add(evaluate(goldenCase,
-                            EvalObservation.failure(elapsed, "model failure; stopReason " + output.state().stopReason())));
+                            EvalObservation.failure(elapsed, "model failure; stopReason " + output.state().stopReason()
+                                    + lastModelFailureDetail(trace))));
                     continue;
                 }
                 List<String> evidence = output.diagnosis().evidenceIds().stream()
@@ -114,6 +115,16 @@ public final class EvalRunner {
     private static FlakyHistorySource flakyHistoryFor(GoldenCase goldenCase) {
         Path historyFile = goldenCase.logPath().getParent().resolve("flaky-history.json");
         return JsonFlakyHistorySource.loadOrEmpty(historyFile);
+    }
+
+    /** Without this, a real-model eval failure is just "MODEL_FAILURE" — the trace
+     * carries the categorized give-up reason (last retry class), so surface it. */
+    private static String lastModelFailureDetail(InMemoryTraceRecorder trace) {
+        return trace.events().stream()
+                .filter(event -> "model_failure".equals(event.eventType()))
+                .reduce((first, second) -> second)
+                .map(event -> " (" + event.error() + ")")
+                .orElse("");
     }
 
     private static String summarize(String content) {

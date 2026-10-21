@@ -170,6 +170,17 @@ public record AgentDecision(
             // unknown types are unparseable output (bounded retry), not lenient submits.
             throw new JSONException("unknown decision type: " + type);
         }
+        // The category taxonomy is part of the structured contract: a real model
+        // inventing "DEPENDENCY_CONFLICT" must bounce as unparseable output (the
+        // bounded retry sees the allowed set in the error) instead of flowing into
+        // scoring as an off-enum label.
+        if (java.util.Arrays.stream(com.cifa.classification.FailureCategory.values())
+                .noneMatch(allowed -> allowed.name().equals(category))) {
+            throw new JSONException("invalid submit category '" + category + "' — allowed: "
+                    + java.util.Arrays.stream(com.cifa.classification.FailureCategory.values())
+                            .map(Enum::name)
+                            .collect(java.util.stream.Collectors.joining(", ")));
+        }
         return submit(category, rootCause, evidence, json.optInt("confidence", 0), action);
     }
 
