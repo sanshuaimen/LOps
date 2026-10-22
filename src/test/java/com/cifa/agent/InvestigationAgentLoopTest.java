@@ -150,6 +150,23 @@ class InvestigationAgentLoopTest {
     }
 
     @Test
+    void systemPromptCarriesTheTriageDefinitionsNotJustLabelNames() {
+        // Real-model finding: a bare label list let the model classify by plain-English
+        // intuition (compile error -> LOGIC_ERROR). The prompt must carry the stage-based
+        // triage definitions, kept in sync from the FailureCategory enum itself.
+        FakeLLMProvider provider = new FakeLLMProvider(AgentDecision.unknown("stop early"));
+        InvestigationAgentLoop loop = loop(provider, InvestigationBudget.defaults());
+        runQuietly(loop, "investigate");
+
+        String systemPrompt = provider.requests().get(0).systemPrompt();
+        assertTrue(systemPrompt.contains("the build refused to produce artifacts"),
+                "DEPENDENCY_BUILD definition missing: " + systemPrompt);
+        assertTrue(systemPrompt.contains("behaved wrongly at runtime"), "LOGIC_ERROR definition missing");
+        assertTrue(systemPrompt.contains("clean reruns tend to clear"), "INFRA_FLAKY definition missing");
+        assertTrue(systemPrompt.contains("failure STAGE"), "stage-vs-mistake boundary rule missing");
+    }
+
+    @Test
     void stopsAtMaxRoundsAndProducesUnknownDiagnosis() {
         FakeLLMProvider provider = new FakeLLMProvider();
         for (int i = 0; i < 5; i++) {
