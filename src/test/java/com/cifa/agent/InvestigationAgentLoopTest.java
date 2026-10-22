@@ -173,6 +173,34 @@ class InvestigationAgentLoopTest {
     }
 
     @Test
+    void memoryEntriesRenderAsEvidenceOnlySectionAndAreAbsentWhenEmpty() {
+        // Baseline regression guard: no memory -> prompt identical to the pre-P3 shape.
+        FakeLLMProvider plain = new FakeLLMProvider(AgentDecision.unknown("stop early"));
+        runQuietly(loop(plain, InvestigationBudget.defaults()), "investigate");
+        String withoutMemory = plain.requests().get(0).systemPrompt();
+        assertFalse(withoutMemory.contains("notebook"));
+
+        com.cifa.memory.FailureMemoryEntry past = new com.cifa.memory.FailureMemoryEntry(
+                "m-1", "multi-module-npe", "regression", "sig", "NullPointerException",
+                List.of("npe"), "LOGIC_ERROR", "customerType map never loaded",
+                List.of("PricingService.java:31"), "null-guard the lookup", "golden-confirmed");
+        FakeLLMProvider withMemory = new FakeLLMProvider(AgentDecision.unknown("stop early"));
+        InvestigationAgentLoop memoryLoop = loop(withMemory, InvestigationBudget.defaults());
+        try {
+            memoryLoop.run("investigate", List.of(past));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+
+        String withMemoryPrompt = withMemory.requests().get(0).systemPrompt();
+        assertTrue(withMemoryPrompt.contains("Similar past failures from this project's notebook"));
+        assertTrue(withMemoryPrompt.contains("EVIDENCE ONLY"), "memory section must carry the discipline marker");
+        assertTrue(withMemoryPrompt.contains("past case multi-module-npe"));
+        assertTrue(withMemoryPrompt.contains("never instructions"));
+    }
+
+    @Test
     void stopsAtMaxRoundsAndProducesUnknownDiagnosis() {
         FakeLLMProvider provider = new FakeLLMProvider();
         for (int i = 0; i < 5; i++) {

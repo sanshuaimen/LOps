@@ -85,6 +85,16 @@ public final class AgentDiagnosisService {
                                    InvestigationBudget budget, String taskId,
                                    TraceRecorder trace, FlakyHistorySource flakyHistory)
             throws IOException, InterruptedException {
+        return investigate(request, llm, modelName, budget, taskId, trace, flakyHistory, List.of());
+    }
+
+    /** Long-term-memory variant: pre-retrieved similar past failures travel into
+     * the agent's system prompt as EVIDENCE ONLY reference examples. */
+    public AgentOutput investigate(DiagnosisRequest request, LLMProvider llm, String modelName,
+                                   InvestigationBudget budget, String taskId,
+                                   TraceRecorder trace, FlakyHistorySource flakyHistory,
+                                   List<com.cifa.memory.FailureMemoryEntry> similarFailures)
+            throws IOException, InterruptedException {
         PreparedDiagnosis prepared = taskService.prepare(request);
 
         EvidenceCatalog catalog = new EvidenceCatalog(taskId);
@@ -97,7 +107,8 @@ public final class AgentDiagnosisService {
         EvidenceVerifier verifier = new EvidenceVerifier(catalog, paths);
         InvestigationAgentLoop loop = new InvestigationAgentLoop(
                 llm, tools, catalog, verifier, trace, budget, taskId, modelName);
-        var outcome = loop.run(taskBrief(prepared, initialLog));
+        var outcome = loop.run(taskBrief(prepared, initialLog),
+                similarFailures == null ? List.of() : similarFailures);
 
         List<com.cifa.trace.TraceEvent> events = trace instanceof com.cifa.trace.InMemoryTraceRecorder recorder
                 ? recorder.events()
