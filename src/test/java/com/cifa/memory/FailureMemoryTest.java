@@ -114,4 +114,17 @@ class FailureMemoryTest {
                 entry("m-1", "c", "regression", "sig", "NullPointerException", "LOGIC_ERROR")))
                 .retrieve("sig", "case", 0, 0.0).isEmpty());
     }
+
+    @Test
+    void queryBuilderMatchesLowercaseJavacDiagnostics() throws Exception {
+        // A/B finding: javac writes "error: cannot find symbol" (lowercase) and the
+        // original head-match only accepted Capitalized Exception/Error — the whole
+        // compile/symbol family was blind-spotted out of retrieval (0 hits).
+        Path log = temp.resolve("compile.log");
+        Files.writeString(log, "[INFO] Building core\n"
+                + "core/src/main/java/Example.java:41: error: cannot find symbol\n"
+                + "  symbol: class CartTotals\n");
+        assertEquals("core/src/main/java/Example.java:41: error: cannot find symbol",
+                com.cifa.cli.MemoryCommand.firstExceptionLine(log));
+    }
 }

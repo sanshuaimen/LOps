@@ -154,16 +154,21 @@ public final class MemoryCommand {
         return 0;
     }
 
-    /** First exception-looking line: the retrieval signature for log-derived entries. */
-    static String firstExceptionLine(Path logFile) throws java.io.IOException {
+    /** First exception-looking line: the retrieval signature for log-derived entries.
+     * Case-insensitive and segment-agnostic on purpose: java exceptions read
+     * "java.lang.NullPointerException: msg" (type right before the first colon) while
+     * javac diagnostics read "File.java:41: error: cannot find symbol" (lowercase
+     * "error:" mid-line) — the compile family was blind-spotted out of the notebook
+     * in the first A/B (0/4 symbol-family cases retrieved anything). */
+    public static String firstExceptionLine(Path logFile) throws java.io.IOException {
         if (!Files.exists(logFile)) {
             throw new Usage("--log file not found: " + logFile, false);
         }
+        java.util.regex.Pattern exceptionMarker =
+                java.util.regex.Pattern.compile("(?i)\\b(exception|error):");
         for (String line : Files.readAllLines(logFile)) {
             String trimmed = line.trim();
-            int colon = trimmed.indexOf(':');
-            String head = colon > 0 ? trimmed.substring(0, colon) : trimmed;
-            if (head.endsWith("Exception") || head.endsWith("Error")) {
+            if (exceptionMarker.matcher(trimmed).find()) {
                 return trimmed;
             }
         }
