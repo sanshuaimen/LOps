@@ -162,8 +162,14 @@ class InvestigationAgentLoopTest {
         assertTrue(systemPrompt.contains("the build refused to produce artifacts"),
                 "DEPENDENCY_BUILD definition missing: " + systemPrompt);
         assertTrue(systemPrompt.contains("behaved wrongly at runtime"), "LOGIC_ERROR definition missing");
-        assertTrue(systemPrompt.contains("clean reruns tend to clear"), "INFRA_FLAKY definition missing");
+        assertTrue(systemPrompt.contains("retry, quarantine or environment-side work"),
+                "INFRA_FLAKY definition missing");
         assertTrue(systemPrompt.contains("failure STAGE"), "stage-vs-mistake boundary rule missing");
+        // Path obligations (real-model finding: correct answers skipping the mandated
+        // evidence path were the dominant full-pass blocker).
+        assertTrue(systemPrompt.contains("needs git_history"), "regression routing rule missing");
+        assertTrue(systemPrompt.contains("needs source_symbol_search"), "symbol routing rule missing");
+        assertTrue(systemPrompt.contains("before labeling INFRA_FLAKY"), "flake routing rule missing");
     }
 
     @Test

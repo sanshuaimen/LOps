@@ -85,6 +85,11 @@ class VersionedComparisonReportTest {
         String markdown = new ComparisonReport(baseline, agent, ReportMetadata.adhoc()).renderMarkdown();
 
         assertTrue(markdown.contains("## Where the agent pays off — and where it does not"));
+        assertTrue(markdown.contains("## Rule failure breakdown (agent)"),
+                "rule failure tally section missing");
+        assertTrue(markdown.matches("(?s).*(\\| (category|rootCause|evidence|pathGate|evidenceSufficient)"
+                        + " \\| [0-9]+ \\||Every agent result passed all rules\\.).*"),
+                "tally must show at least one failing rule row or the all-passed line");
         // Every corpus category must appear as a grouped row.
         assertTrue(markdown.contains("| LOGIC_ERROR |"));
         assertTrue(markdown.contains("| DEPENDENCY_BUILD |"));

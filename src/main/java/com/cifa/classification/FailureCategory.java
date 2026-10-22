@@ -2,16 +2,19 @@ package com.cifa.classification;
 
 public enum FailureCategory {
     /** Code compiled and ran, but behaved wrongly at runtime: test assertion
-     * failures, NPEs, wrong results — including a dependency conflict that only
-     * manifests while executing. */
-    LOGIC_ERROR("code compiled and ran but behaved wrongly at runtime "
-            + "(test assertion failures, NPEs, wrong results, runtime errors "
-            + "surfacing while tests execute)"),
-    /** Environment/time/load-shaped failures that clean reruns tend to clear:
-     * timeouts, connection failures, DNS, OOM, order- or clock-dependent flakes. */
-    INFRA_FLAKY("environment, time or load shaped failures that clean reruns "
-            + "tend to clear (timeouts, connection refused, DNS, OOM, "
-            + "order-dependent or clock-dependent flakes)"),
+     * failures, NPEs, wrong results. The remediation is a code change — even when
+     * the trigger looks environmental (e.g. an upstream 5xx the client fails to
+     * handle) or the failure only manifests intermittently under load. */
+    LOGIC_ERROR("code compiled and ran but behaved wrongly at runtime (test "
+            + "assertion failures, NPEs, wrong results); the remediation is a code "
+            + "change, even when the trigger looks environmental (e.g. an upstream "
+            + "5xx the client should retry) or the failure is intermittent"),
+    /** Environment/time/load-shaped failures whose remediation is retry,
+     * quarantine or environment-side work rather than a code change: timeouts,
+     * connection failures, DNS, OOM, order- or clock-dependent flakes. */
+    INFRA_FLAKY("environment, time or load shaped failures whose remediation is "
+            + "retry, quarantine or environment-side work rather than a code change "
+            + "(timeouts, connection refused, DNS, OOM, order-dependent flakes)"),
     /** The build refused to produce artifacts: javac errors (cannot find symbol,
      * ambiguous overloads), unresolvable dependencies, missing parents — even
      * when the underlying mistake is in the code, the failure stage is the build. */

@@ -101,6 +101,7 @@ public final class ComparisonReport {
         }
         markdown.append('\n');
 
+        markdown.append(renderRuleFailureTally());
         markdown.append(renderPayoffSection());
 
         markdown.append("## Tool-path distribution (agent)\n\n");
@@ -197,6 +198,61 @@ public final class ComparisonReport {
         }
         return String.format(java.util.Locale.ROOT, "no measured accuracy benefit; agent costs %.1fx tokens here",
                 baseTokens == 0 ? 0 : agentTokens / baseTokens);
+    }
+
+    /**
+     * First rule that fails per non-passing agent result — makes visible WHAT
+     * actually blocks full passes (real-model runs: the path gate dominates,
+     * which raw pass counts hide).
+     */
+    private String renderRuleFailureTally() {
+        StringBuilder markdown = new StringBuilder();
+        markdown.append("## Rule failure breakdown (agent)\n\n");
+        java.util.Map<String, Integer> tally = new java.util.LinkedHashMap<>();
+        for (EvalResult result : agent.results()) {
+            if (!result.passed()) {
+                tally.merge(firstFailedRule(result), 1, Integer::sum);
+            }
+        }
+        if (tally.isEmpty()) {
+            markdown.append("Every agent result passed all rules.\n\n");
+            return markdown.toString();
+        }
+        markdown.append("First rule that fails per case (priority order), over ")
+                .append(tally.values().stream().mapToInt(Integer::intValue).sum())
+                .append(" non-passing results.\n\n");
+        markdown.append("| first failing rule | cases |\n| --- | --- |\n");
+        tally.forEach((rule, count) -> markdown.append("| ").append(rule).append(" | ").append(count).append(" |\n"));
+        markdown.append('\n');
+        return markdown.toString();
+    }
+
+    static String firstFailedRule(EvalResult result) {
+        if (!result.error().isEmpty()) {
+            return "error";
+        }
+        if (!result.categoryCorrect()) {
+            return "category";
+        }
+        if (!result.rootCauseCorrect()) {
+            return "rootCause";
+        }
+        if (!result.evidenceCorrect()) {
+            return "evidence";
+        }
+        if (!result.evidenceSufficient()) {
+            return "evidenceSufficient";
+        }
+        if (!result.unknownCorrect()) {
+            return "unknownBehavior";
+        }
+        if (!result.forbiddenConclusionFree()) {
+            return "forbiddenConclusion";
+        }
+        if (!result.requiredToolsSatisfied()) {
+            return "pathGate";
+        }
+        return "none";
     }
 
     private List<String> categories() {
