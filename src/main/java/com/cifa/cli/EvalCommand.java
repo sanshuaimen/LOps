@@ -94,6 +94,9 @@ public final class EvalCommand {
         String layer = "accept";
         Path out = Path.of("target/eval-reports");
         boolean help;
+        Path memoryFile;
+        int memoryK = 2;
+        boolean skipBaseline;
     }
 
     private static final class UsageException extends RuntimeException {
@@ -124,6 +127,19 @@ public final class EvalCommand {
                 }
                 case "--layer" -> options.layer = value(args, ++i, flag);
                 case "--out" -> options.out = Path.of(value(args, ++i, flag));
+                case "--memory" -> options.memoryFile = Path.of(value(args, ++i, flag));
+                case "--memory-k" -> {
+                    String raw = value(args, ++i, flag);
+                    try {
+                        options.memoryK = Integer.parseInt(raw);
+                    } catch (NumberFormatException e) {
+                        throw new UsageException("--memory-k expects an integer, got '" + raw + "'");
+                    }
+                    if (options.memoryK < 1 || options.memoryK > 5) {
+                        throw new UsageException("--memory-k must be within 1..5, got " + options.memoryK);
+                    }
+                }
+                case "--skip-baseline" -> options.skipBaseline = true;
                 default -> throw new UsageException("unknown option '" + flag + "'");
             }
         }
@@ -195,6 +211,30 @@ public final class EvalCommand {
         String modelName = options.provider.equals("fake") ? "eval-fake" : model;
 
         EvalRunner runner = new EvalRunner();
+        // Optional long-term memory ("错题本"): the CLI owns store+retrieval (eval
+        // never touches the store); retrieval excludes the querying case's own id.
+        java.util.function.Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor =
+                goldenCase -> List.of();
+        String memoryNote = "off";
+        if (options.memoryFile != null) {
+            com.cifa.memory.FailureMemoryStore store =
+                    new com.cifa.memory.FailureMemoryStore(options.memoryFile);
+            com.cifa.memory.FailureMemoryRetrieval retrieval =
+                    new com.cifa.memory.FailureMemoryRetrieval(store.entries());
+            memoryFor = goldenCase -> {
+                try {
+                    String signature = MemoryCommand.firstExceptionLine(goldenCase.logPath());
+                    return retrieval.retrieve(signature == null ? "" : signature, goldenCase.id(),
+                            options.memoryK, 0.5);
+                } catch (java.io.IOException e) {
+                    // Retrieval failing to read a log degrades that case to no-memory —
+                    // deterministic, and never blocks the run.
+                    return List.of();
+                }
+            };
+            memoryNote = store.size() + " entries, top-" + options.memoryK;
+        }
+
         List<EvalReport> baselineRuns = new ArrayList<>();
         List<EvalReport> agentRuns = new ArrayList<>();
         List<Path> written = new ArrayList<>();
@@ -210,30 +250,50 @@ public final class EvalCommand {
             ReportMetadata metadata = new ReportMetadata(
                     DatasetVersion.of(cases), CodeVersion.shortSha(), providerLabel,
                     UUID.randomUUID().toString().substring(0, 8), Instant.now());
-            EvalReport baseline = runner.runBaseline(cases, baselineProvider);
-            EvalReport agent = runner.runAgent(cases, agentProvider, modelName);
-            baselineRuns.add(baseline);
+            EvalReport baseline = options.skipBaseline
+                    ? null
+                    : runner.runBaseline(cases, baselineProvider);
+            EvalReport agent = runner.runAgent(cases, agentProvider, modelName, memoryFor);
+            if (baseline != null) {
+                baselineRuns.add(baseline);
+            }
             agentRuns.add(agent);
 
-            String markdown = new ComparisonReport(baseline, agent, metadata).renderMarkdown();
+            ReportMetadata agentMetadata = new ReportMetadata(
+                    DatasetVersion.of(cases), CodeVersion.shortSha(),
+                    providerLabel + (options.memoryFile != null ? "-memory" : ""),
+                    metadata.runId(), metadata.generatedAt());
+            String markdown;
+            if (baseline != null) {
+                markdown = new ComparisonReport(baseline, agent, metadata).renderMarkdown();
+            } else {
+                markdown = new EvalReport("agent", "p3-memory-" + memoryNote, metadata.generatedAt(), agent.results())
+                        .toMarkdown();
+            }
             if (options.runs > 1 && run == options.runs) {
-                markdown += "\n\n" + new RunAggregator(baselineRuns).renderMarkdown()
-                        + "\n\n" + new RunAggregator(agentRuns).renderMarkdown();
+                markdown += "\n\n" + new RunAggregator(agentRuns).renderMarkdown();
+                if (!baselineRuns.isEmpty()) {
+                    markdown += "\n\n" + new RunAggregator(baselineRuns).renderMarkdown();
+                }
             }
             Files.createDirectories(options.out);
-            written.add(Files.writeString(options.out.resolve(metadata.fileName()), markdown, StandardCharsets.UTF_8));
-            written.add(Files.writeString(options.out.resolve("evalreport-baseline-" + metadata.runId() + ".json"),
-                    baseline.toJson(), StandardCharsets.UTF_8));
+            written.add(Files.writeString(options.out.resolve(agentMetadata.fileName()), markdown, StandardCharsets.UTF_8));
+            if (baseline != null) {
+                written.add(Files.writeString(options.out.resolve("evalreport-baseline-" + metadata.runId() + ".json"),
+                        baseline.toJson(), StandardCharsets.UTF_8));
+            }
             written.add(Files.writeString(options.out.resolve("evalreport-agent-" + metadata.runId() + ".json"),
                     agent.toJson(), StandardCharsets.UTF_8));
-            out.printf("run %d/%d: baseline passed %d/%d, agent passed %d/%d (category acc %.1f%% vs %.1f%%)%n",
-                    run, options.runs, baseline.passedCount(), cases.size(),
-                    agent.passedCount(), cases.size(),
-                    agent.categoryAccuracy() * 100.0, baseline.categoryAccuracy() * 100.0);
+            String baselineNote = baseline == null ? "baseline skipped"
+                    : "baseline passed " + baseline.passedCount() + "/" + cases.size();
+            out.printf("run %d/%d: agent passed %d/%d (category acc %.1f%%), %s%n",
+                    run, options.runs, agent.passedCount(), cases.size(),
+                    agent.categoryAccuracy() * 100.0, baselineNote);
         }
 
         out.println("eval complete: layer=" + options.layer + " cases=" + cases.size()
-                + " provider=" + providerLabel + (options.provider.equals("fake") ? " (fake)" : " (REAL MODEL)"));
+                + " provider=" + providerLabel + (options.provider.equals("fake") ? " (fake)" : " (REAL MODEL)")
+                + " memory=" + memoryNote);
         written.forEach(path -> out.println("  " + path.toAbsolutePath()));
         return 0;
     }

@@ -66,6 +66,15 @@ public final class EvalRunner {
 
     public EvalReport runAgent(List<GoldenCase> cases, Function<GoldenCase, LLMProvider> providers,
                                String modelName) {
+        return runAgent(cases, providers, modelName, goldenCase -> List.of());
+    }
+
+    /** Long-term-memory A/B variant: {@code memoryFor} supplies pre-retrieved
+     * notebook entries per case (the CLI owns store access and retrieval — eval
+     * itself must never touch the store, enforced by MemoryIsolationTest). */
+    public EvalReport runAgent(List<GoldenCase> cases, Function<GoldenCase, LLMProvider> providers,
+                               String modelName,
+                               Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor) {
         AgentDiagnosisService service = new AgentDiagnosisService();
         int availableTools = service.toolCount();
         List<EvalResult> results = new ArrayList<>();
@@ -76,7 +85,8 @@ public final class EvalRunner {
                 var output = service.investigate(
                         new DiagnosisRequest(goldenCase.logPath(), goldenCase.repoRoot(), ContextBudget.DEFAULT),
                         providers.apply(goldenCase), modelName, InvestigationBudget.defaults(),
-                        "eval-" + goldenCase.id(), trace, flakyHistoryFor(goldenCase));
+                        "eval-" + goldenCase.id(), trace, flakyHistoryFor(goldenCase),
+                        memoryFor.apply(goldenCase));
                 long elapsed = elapsedSince(started);
 
                 if (output.diagnosis() == null) {

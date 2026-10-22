@@ -155,7 +155,7 @@ public final class MemoryCommand {
     }
 
     /** First exception-looking line: the retrieval signature for log-derived entries. */
-    static String firstExceptionLine(Path logFile) throws Exception {
+    static String firstExceptionLine(Path logFile) throws java.io.IOException {
         if (!Files.exists(logFile)) {
             throw new Usage("--log file not found: " + logFile, false);
         }
