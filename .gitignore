@@ -11,3 +11,4 @@ docs/
 fixtures/eval/git-regression-checkout/repo/
 fixtures/eval/git-revert-regression/repo/
 failure-memory.json
+agent-trace-*.jsonl
