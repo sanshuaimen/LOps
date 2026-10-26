@@ -153,26 +153,26 @@ public final class Main {
         var agentBudget = com.cifa.agent.InvestigationBudget.defaults();
 
         try (com.cifa.trace.JsonlTraceRecorder traceRecorder = new com.cifa.trace.JsonlTraceRecorder(traceFile)) {
-            var output = new com.cifa.service.AgentDiagnosisService().investigate(
+            // 降级链: agent MODEL_FAILURE → baseline (same provider) → rules-only tail.
+            // The degrade decision is deterministic service code, never the dead agent's.
+            var outcome = new com.cifa.service.FallbackDiagnosisOrchestrator().diagnose(
                     new com.cifa.service.DiagnosisRequest(logPath, repoRoot, budget),
                     llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory);
 
-            if (output.diagnosis() == null) {
-                // MODEL_FAILURE keeps a null diagnosis on purpose — it must not be
-                // dressed up as an UNKNOWN. Report the structured failure and exit non-zero.
-                System.out.println(new org.json.JSONObject()
-                        .put("taskId", taskId)
-                        .put("stopReason", output.state().stopReason().name())
-                        .put("diagnosis", org.json.JSONObject.NULL)
-                        .put("evidenceCount", output.catalog().size())
-                        .put("trace", traceFile.toAbsolutePath().toString())
-                        .toString(2));
-                System.err.println("Agent investigation failed: " + output.state().stopReason()
-                        + " (trace: " + traceFile.toAbsolutePath() + ")");
-                System.exit(2);
+            if (outcome.degraded()) {
+                System.err.println("DEGRADED: " + outcome.fallbackReason()
+                        + " — showing " + outcome.stage() + " result (trace: " + traceFile.toAbsolutePath() + ")");
+                var baseline = outcome.baseline();
+                System.out.println("== Degraded diagnosis (" + outcome.stage() + ", task " + taskId + ") ==");
+                System.out.println(new com.cifa.report.MarkdownRenderer().render(
+                        baseline.preparation().classified().category(),
+                        baseline.analysis(),
+                        baseline.unverifiedEvidence()));
+                System.out.println("trace: " + traceFile.toAbsolutePath());
                 return;
             }
 
+            var output = outcome.agent();
             System.out.println("== Agent diagnosis (" + taskId + ") ==");
             System.out.println(output.diagnosis().toJson().toString(2));
             System.out.println("trace: " + traceFile.toAbsolutePath());
