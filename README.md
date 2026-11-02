@@ -135,7 +135,7 @@ java -cp target/analyzer.jar com.cifa.cli.EvalCommand --provider fake --layer ac
   `--layer accept|regression|robustness|security|all`, `--out <dir>`.
 - `--provider fake` with `--fake-script` replays a recorded decision script —
   the full agent path with zero network.
-- `--memory <file>` enables long-term failure memory ("错题本") retrieval A/B;
+- `--memory <file>` enables long-term failure memory retrieval A/B;
   the CLI owns store + retrieval and excludes the querying case's own id.
 - `--judge` A/Bs the in-loop semantic review (the judge is derived from each
   case's own provider, so a scripted fake serves both from one script).
@@ -144,7 +144,7 @@ java -cp target/analyzer.jar com.cifa.cli.EvalCommand --provider fake --layer ac
   answers but never overturn a deterministic pass). Both flags are no-ops
   with `--provider fake`: CI scoring stays deterministic.
 
-## Failure memory ("错题本")
+## Failure memory
 
 `MemoryCommand` maintains the cross-run notebook of past failures
 (`failure-memory.json`, gitignored — it is a runtime asset):
