@@ -23,6 +23,7 @@ import java.util.function.Function;
 
 public final class EvalRunner {
     private final BaselineFailureAnalyzer baseline;
+    private JudgeGrader judgeGrader;
 
     public EvalRunner() {
         this(new BaselineFailureAnalyzer());
@@ -30,6 +31,13 @@ public final class EvalRunner {
 
     public EvalRunner(BaselineFailureAnalyzer baseline) {
         this.baseline = baseline;
+    }
+
+    /** Optional auxiliary grader (LLM-as-judge): only re-grades keyword misses.
+     * Null keeps scoring purely deterministic — the CI default. */
+    public EvalRunner withJudgeGrader(JudgeGrader judgeGrader) {
+        this.judgeGrader = judgeGrader;
+        return this;
     }
 
     public EvalReport runBaseline(List<GoldenCase> cases, LLMProvider provider) {
@@ -75,6 +83,18 @@ public final class EvalRunner {
     public EvalReport runAgent(List<GoldenCase> cases, Function<GoldenCase, LLMProvider> providers,
                                String modelName,
                                Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor) {
+        return runAgent(cases, providers, modelName, memoryFor, null);
+    }
+
+    /** Semantic-review A/B variant: {@code judgeFromProvider} derives the
+     * layer-3 judge from each case's provider — same instance, so a scripted
+     * fake provider serves both the investigation and the judgment responses
+     * from one script. Null keeps eval on the raw agent, which is the default:
+     * eval measures the bare agent unless an A/B explicitly opts in. */
+    public EvalReport runAgent(List<GoldenCase> cases, Function<GoldenCase, LLMProvider> providers,
+                               String modelName,
+                               Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor,
+                               Function<LLMProvider, com.cifa.agent.JudgmentAgent> judgeFromProvider) {
         AgentDiagnosisService service = new AgentDiagnosisService();
         int availableTools = service.toolCount();
         List<EvalResult> results = new ArrayList<>();
@@ -82,11 +102,14 @@ public final class EvalRunner {
             long started = System.nanoTime();
             try {
                 InMemoryTraceRecorder trace = new InMemoryTraceRecorder();
+                LLMProvider caseProvider = providers.apply(goldenCase);
+                com.cifa.agent.JudgmentAgent judge =
+                        judgeFromProvider == null ? null : judgeFromProvider.apply(caseProvider);
                 var output = service.investigate(
                         new DiagnosisRequest(goldenCase.logPath(), goldenCase.repoRoot(), ContextBudget.DEFAULT),
-                        providers.apply(goldenCase), modelName, InvestigationBudget.defaults(),
+                        caseProvider, modelName, InvestigationBudget.defaults(),
                         "eval-" + goldenCase.id(), trace, flakyHistoryFor(goldenCase),
-                        memoryFor.apply(goldenCase));
+                        memoryFor.apply(goldenCase), judge);
                 long elapsed = elapsedSince(started);
 
                 if (output.diagnosis() == null) {
@@ -157,6 +180,20 @@ public final class EvalRunner {
             rootCauseCorrect = !observation.unknown() && goldenCase.rootCauseKeywords().stream()
                     .map(value -> value.toLowerCase(Locale.ROOT))
                     .allMatch(observation.rootCause().toLowerCase(Locale.ROOT)::contains);
+            // Auxiliary semantic re-grade for keyword misses only: a keyword hit
+            // is never re-judged, so the judge can rescue differently-worded
+            // correct diagnoses but can never overturn a deterministic pass.
+            if (!rootCauseCorrect && !observation.unknown() && judgeGrader != null
+                    && !goldenCase.rootCauseKeywords().isEmpty()) {
+                try {
+                    rootCauseCorrect = judgeGrader.grade(goldenCase.rootCauseKeywords(),
+                            observation.rootCause()).verdict() == JudgeGrader.Verdict.MATCH;
+                } catch (InterruptedException e) {
+                    // Cancellation: restore the flag and keep the deterministic
+                    // keyword verdict — grading is best-effort, never a downgrade.
+                    Thread.currentThread().interrupt();
+                }
+            }
         }
         String evidenceText = String.join("\n", observation.evidence()).toLowerCase(Locale.ROOT);
         boolean evidenceCorrect = goldenCase.evidenceLocators().stream()

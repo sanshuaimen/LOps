@@ -62,14 +62,16 @@ class TaskStateMachineTest {
         assertEquals(TaskStatus.FAILED, TaskStateMachine.terminalForAgent(AgentStopReason.MODEL_FAILURE));
 
         for (AgentStopReason budgetStop : List.of(
-                AgentStopReason.INSUFFICIENT_EVIDENCE, AgentStopReason.MAX_ROUNDS,
+                AgentStopReason.INSUFFICIENT_EVIDENCE, AgentStopReason.JUDGE_UNSUPPORTED,
+                AgentStopReason.MAX_ROUNDS,
                 AgentStopReason.TOKEN_BUDGET_EXHAUSTED, AgentStopReason.TIME_BUDGET_EXHAUSTED,
                 AgentStopReason.NO_PROGRESS, AgentStopReason.CONSECUTIVE_TOOL_FAILURES)) {
             assertEquals(TaskStatus.UNKNOWN, TaskStateMachine.terminalForAgent(budgetStop),
                     () -> budgetStop + " is an honest-unknown stop, not a failure");
         }
-        // all 9 reasons covered
-        assertEquals(9, AgentStopReason.values().length);
+        // all 10 reasons covered (JUDGE_UNSUPPORTED = review overturned a claim,
+        // kept distinct from INSUFFICIENT_EVIDENCE so metrics never conflate them)
+        assertEquals(10, AgentStopReason.values().length);
     }
 
     @Test

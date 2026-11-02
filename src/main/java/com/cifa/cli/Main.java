@@ -37,6 +37,7 @@ public final class Main {
         String flakyHistoryFlag = null;
         String taskIdFlag = null;
         String providerFlag = null;
+        String judgeFlag = null;
         boolean postComment = false;
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -52,12 +53,13 @@ public final class Main {
                 case "--flaky-history" -> flakyHistoryFlag = ++i < args.length ? args[i] : null;
                 case "--task-id" -> taskIdFlag = ++i < args.length ? args[i] : null;
                 case "--provider" -> providerFlag = ++i < args.length ? args[i] : null;
+                case "--judge" -> judgeFlag = "true";
                 default -> { }
             }
         }
         if (logPath == null || repoPath == null) {
             System.err.println("Usage: analyze --log <path> --repo <path> [--mode baseline|agent] [--trace <file>] "
-                    + "[--fake-script <file>] [--flaky-history <file>] [--task-id <id>] "
+                    + "[--fake-script <file>] [--flaky-history <file>] [--task-id <id>] [--judge] "
                     + "[--format markdown|html|slack] [--post-comment [--repo-slug owner/repo] [--pr-number N]]");
             System.exit(1);
             return;
@@ -113,8 +115,12 @@ public final class Main {
 
         String mode = ConfigResolver.resolve(modeFlag, System.getenv("DIAGNOSIS_MODE"), fileConfig, "DIAGNOSIS_MODE", "baseline");
         if (mode.equals("agent")) {
+            String judgeSetting = ConfigResolver.resolve(judgeFlag, System.getenv("JUDGE_ENABLED"),
+                    fileConfig, "JUDGE_ENABLED", "false");
+            String agentModel = provider.equals("fake") ? "fake" : ConfigResolver.resolve(
+                    null, System.getenv("AGENT_MODEL"), fileConfig, "AGENT_MODEL", provider + "-default");
             runAgentMode(llm, provider, Path.of(logPath), repoRoot, budget,
-                    traceFlag, flakyHistoryFlag, taskIdFlag, fileConfig);
+                    traceFlag, flakyHistoryFlag, taskIdFlag, agentModel, judgeSetting.equalsIgnoreCase("true"));
             return;
         }
 
@@ -139,7 +145,7 @@ public final class Main {
 
     private static void runAgentMode(LLMProvider llm, String providerName, Path logPath, Path repoRoot,
                                      ContextBudget budget, String traceFlag, String flakyHistoryFlag,
-                                     String taskIdFlag, Map<String, String> fileConfig) throws Exception {
+                                     String taskIdFlag, String modelName, boolean judgeEnabled) throws Exception {
         String taskId = taskIdFlag != null ? taskIdFlag
                 : "local-" + Long.toString(System.currentTimeMillis(), 36);
         Path traceFile = Path.of(traceFlag != null ? traceFlag : "agent-trace-" + taskId + ".jsonl");
@@ -148,16 +154,18 @@ public final class Main {
             flakyHistory = new com.cifa.tool.JsonFlakyHistorySource(Path.of(flakyHistoryFlag));
         }
 
-        String modelName = providerName.equals("fake") ? "fake" : ConfigResolver.resolve(
-                null, System.getenv("AGENT_MODEL"), fileConfig, "AGENT_MODEL", providerName + "-default");
         var agentBudget = com.cifa.agent.InvestigationBudget.defaults();
 
         try (com.cifa.trace.JsonlTraceRecorder traceRecorder = new com.cifa.trace.JsonlTraceRecorder(traceFile)) {
             // 降级链: agent MODEL_FAILURE → baseline (same provider) → rules-only tail.
             // The degrade decision is deterministic service code, never the dead agent's.
+            // The judge rides inside the agent attempt only; its own failures degrade
+            // internally (UNAVAILABLE, rules floor stands) and never reach this chain.
+            com.cifa.agent.JudgmentAgent judge = judgeEnabled
+                    ? new com.cifa.agent.JudgmentAgent(llm, modelName) : null;
             var outcome = new com.cifa.service.FallbackDiagnosisOrchestrator().diagnose(
                     new com.cifa.service.DiagnosisRequest(logPath, repoRoot, budget),
-                    llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory);
+                    llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory, judge);
 
             if (outcome.degraded()) {
                 System.err.println("DEGRADED: " + outcome.fallbackReason()

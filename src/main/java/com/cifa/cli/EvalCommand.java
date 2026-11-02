@@ -47,9 +47,13 @@ public final class EvalCommand {
 
             Usage: eval [--fixtures <dir>] --provider fake|ollama|anthropic|deepseek [--model <model>]
                         [--runs N] [--layer accept|regression|robustness|security|all]
-                        [--out <dir>]
+                        [--out <dir>] [--judge] [--judge-grader]
 
             Defaults: --fixtures fixtures/eval  --runs 1  --layer accept  --out target/eval-reports
+            --judge routes diagnosis submissions through the in-loop judge (A/B the
+            in-loop review); --judge-grader lets an LLM re-grade keyword misses at
+            SCORING time (hits always pass unchanged). Both are no-ops with
+            --provider fake: CI scoring stays fully deterministic.
             Provider defaults: ollama → OLLAMA_URL (default http://localhost:11434) + OLLAMA_MODEL
                                (default deepseek-r1:8b); anthropic → ANTHROPIC_API_KEY + ANTHROPIC_MODEL
                                (default claude-sonnet-5); deepseek → DEEPSEEK_API_KEY + DEEPSEEK_MODEL
@@ -97,6 +101,8 @@ public final class EvalCommand {
         Path memoryFile;
         int memoryK = 2;
         boolean skipBaseline;
+        boolean judge;
+        boolean judgeGrader;
     }
 
     private static final class UsageException extends RuntimeException {
@@ -140,6 +146,8 @@ public final class EvalCommand {
                     }
                 }
                 case "--skip-baseline" -> options.skipBaseline = true;
+                case "--judge" -> options.judge = true;
+                case "--judge-grader" -> options.judgeGrader = true;
                 default -> throw new UsageException("unknown option '" + flag + "'");
             }
         }
@@ -211,6 +219,17 @@ public final class EvalCommand {
         String modelName = options.provider.equals("fake") ? "eval-fake" : model;
 
         EvalRunner runner = new EvalRunner();
+        // Auxiliary LLM grading at scoring time: keyword hits always pass
+        // deterministically; only misses are re-graded, and only with a real
+        // provider — fake runs keep scoring fully deterministic (CI discipline).
+        if (options.judgeGrader) {
+            if (realProvider != null) {
+                runner.withJudgeGrader(new com.cifa.eval.JudgeGrader(realProvider, model));
+            } else {
+                err.println("eval: --judge-grader ignored with --provider fake (CI scoring stays deterministic)");
+            }
+        }
+        String gradingNote = !options.judgeGrader ? "off" : (realProvider != null ? "on" : "ignored(fake)");
         // Optional long-term memory ("错题本"): the CLI owns store+retrieval (eval
         // never touches the store); retrieval excludes the querying case's own id.
         java.util.function.Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor =
@@ -235,6 +254,14 @@ public final class EvalCommand {
             memoryNote = store.size() + " entries, top-" + options.memoryK;
         }
 
+        // Optional semantic review (layer 3): the judge is derived from each
+        // case's own provider, so a scripted fake serves investigation and
+        // judgment from one script. Off by default — eval measures the raw
+        // agent unless an A/B run explicitly opts in.
+        java.util.function.Function<LLMProvider, com.cifa.agent.JudgmentAgent> judgeFromProvider =
+                options.judge ? provider -> new com.cifa.agent.JudgmentAgent(provider, modelName) : null;
+        String judgeNote = options.judge ? "on" : "off";
+
         List<EvalReport> baselineRuns = new ArrayList<>();
         List<EvalReport> agentRuns = new ArrayList<>();
         List<Path> written = new ArrayList<>();
@@ -253,7 +280,7 @@ public final class EvalCommand {
             EvalReport baseline = options.skipBaseline
                     ? null
                     : runner.runBaseline(cases, baselineProvider);
-            EvalReport agent = runner.runAgent(cases, agentProvider, modelName, memoryFor);
+            EvalReport agent = runner.runAgent(cases, agentProvider, modelName, memoryFor, judgeFromProvider);
             if (baseline != null) {
                 baselineRuns.add(baseline);
             }
@@ -261,7 +288,8 @@ public final class EvalCommand {
 
             ReportMetadata agentMetadata = new ReportMetadata(
                     DatasetVersion.of(cases), CodeVersion.shortSha(),
-                    providerLabel + (options.memoryFile != null ? "-memory" : ""),
+                    providerLabel + (options.memoryFile != null ? "-memory" : "") + (options.judge ? "-judge" : "")
+                            + (options.judgeGrader && realProvider != null ? "-grading" : ""),
                     metadata.runId(), metadata.generatedAt());
             String markdown;
             if (baseline != null) {
@@ -293,7 +321,7 @@ public final class EvalCommand {
 
         out.println("eval complete: layer=" + options.layer + " cases=" + cases.size()
                 + " provider=" + providerLabel + (options.provider.equals("fake") ? " (fake)" : " (REAL MODEL)")
-                + " memory=" + memoryNote);
+                + " memory=" + memoryNote + " judge=" + judgeNote + " grading=" + gradingNote);
         written.forEach(path -> out.println("  " + path.toAbsolutePath()));
         return 0;
     }

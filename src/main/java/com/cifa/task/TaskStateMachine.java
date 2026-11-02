@@ -39,8 +39,8 @@ public final class TaskStateMachine {
     public static TaskStatus terminalForAgent(AgentStopReason stopReason) {
         return switch (stopReason) {
             case COMPLETED -> TaskStatus.SUCCEEDED;
-            case INSUFFICIENT_EVIDENCE, MAX_ROUNDS, TOKEN_BUDGET_EXHAUSTED, TIME_BUDGET_EXHAUSTED,
-                    NO_PROGRESS, CONSECUTIVE_TOOL_FAILURES -> TaskStatus.UNKNOWN;
+            case INSUFFICIENT_EVIDENCE, JUDGE_UNSUPPORTED, MAX_ROUNDS, TOKEN_BUDGET_EXHAUSTED,
+                    TIME_BUDGET_EXHAUSTED, NO_PROGRESS, CONSECUTIVE_TOOL_FAILURES -> TaskStatus.UNKNOWN;
             case MODEL_FAILURE -> TaskStatus.FAILED;
             case CANCELLED -> TaskStatus.CANCELLED;
         };

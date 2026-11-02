@@ -95,6 +95,19 @@ public final class AgentDiagnosisService {
                                    TraceRecorder trace, FlakyHistorySource flakyHistory,
                                    List<com.cifa.memory.FailureMemoryEntry> similarFailures)
             throws IOException, InterruptedException {
+        return investigate(request, llm, modelName, budget, taskId, trace, flakyHistory,
+                similarFailures, null);
+    }
+
+    /** Semantic-review variant: a non-null {@code judge} adds the layer-3 review
+     * pass inside the loop (after the deterministic gates); null keeps the
+     * raw-agent behavior eval and the fallback chain rely on. */
+    public AgentOutput investigate(DiagnosisRequest request, LLMProvider llm, String modelName,
+                                   InvestigationBudget budget, String taskId,
+                                   TraceRecorder trace, FlakyHistorySource flakyHistory,
+                                   List<com.cifa.memory.FailureMemoryEntry> similarFailures,
+                                   com.cifa.agent.JudgmentAgent judge)
+            throws IOException, InterruptedException {
         PreparedDiagnosis prepared = taskService.prepare(request);
 
         EvidenceCatalog catalog = new EvidenceCatalog(taskId);
@@ -106,7 +119,7 @@ public final class AgentDiagnosisService {
 
         EvidenceVerifier verifier = new EvidenceVerifier(catalog, paths);
         InvestigationAgentLoop loop = new InvestigationAgentLoop(
-                llm, tools, catalog, verifier, trace, budget, taskId, modelName);
+                llm, tools, catalog, verifier, trace, budget, taskId, modelName, judge);
         var outcome = loop.run(taskBrief(prepared, initialLog),
                 similarFailures == null ? List.of() : similarFailures);
 

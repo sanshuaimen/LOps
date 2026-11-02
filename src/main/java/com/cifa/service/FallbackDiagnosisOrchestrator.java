@@ -60,10 +60,23 @@ public final class FallbackDiagnosisOrchestrator {
                             InvestigationBudget budget, String taskId, TraceRecorder trace,
                             FlakyHistorySource flakyHistory)
             throws IOException, InterruptedException {
+        return diagnose(request, llm, modelName, budget, taskId, trace, flakyHistory, null);
+    }
+
+    /** Semantic-review variant: a non-null judge rides inside the agent attempt.
+     * Judge malfunctions never trigger this orchestrator's fallback chain — the
+     * judge degrades internally (UNAVAILABLE verdict, rules floor stands). Only
+     * agent-path IOExceptions and MODEL_FAILURE reach the baseline here. */
+    public Outcome diagnose(com.cifa.service.DiagnosisRequest request, LLMProvider llm, String modelName,
+                            InvestigationBudget budget, String taskId, TraceRecorder trace,
+                            FlakyHistorySource flakyHistory,
+                            com.cifa.agent.JudgmentAgent judge)
+            throws IOException, InterruptedException {
         AgentDiagnosisService.AgentOutput agent;
         String reason;
         try {
-            agent = agentService.investigate(request, llm, modelName, budget, taskId, trace, flakyHistory);
+            agent = agentService.investigate(request, llm, modelName, budget, taskId, trace, flakyHistory,
+                    List.of(), judge);
         } catch (IOException e) {
             // Provider/tool transport died outright — degrade just like MODEL_FAILURE.
             agent = null;

@@ -32,14 +32,30 @@ public final class FakeLLMProvider implements LLMProvider {
      * Builds a provider from a recorded script: a JSON file holding an array
      * of decision objects, as captured from a real run or written by hand for
      * offline evals. Lets the full agent path run with zero network access.
+     * Items are served with their ORIGINAL text as response content — the
+     * layer-3 judge parses raw content, so a re-serialization would strip
+     * judgment keys ({@code verdict}) and every judgment would read
+     * UNAVAILABLE. Mixed scripts (decisions + judgment objects) work because
+     * judgment payloads parse as valid (UNKNOWN-category) decisions at load
+     * time and travel verbatim at invoke time.
      */
     public static FakeLLMProvider recorded(java.nio.file.Path scriptFile) throws java.io.IOException {
         org.json.JSONArray array = new org.json.JSONArray(java.nio.file.Files.readString(scriptFile));
         FakeLLMProvider provider = new FakeLLMProvider();
         for (int i = 0; i < array.length(); i++) {
-            provider.enqueue(AgentDecision.fromJson(array.getJSONObject(i).toString()));
+            String original = array.getJSONObject(i).toString();
+            provider.enqueueVerbatim(original, AgentDecision.fromJson(original));
         }
         return provider;
+    }
+
+    private record Scripted(String content, AgentDecision decision) {
+    }
+
+    /** Script item with a decision AND its original text as response content. */
+    public FakeLLMProvider enqueueVerbatim(String content, AgentDecision decision) {
+        scripted.add(new Scripted(content, decision));
+        return this;
     }
 
     public FakeLLMProvider enqueue(AgentDecision decision) {
@@ -82,6 +98,8 @@ public final class FakeLLMProvider implements LLMProvider {
         LLMResponse response;
         if (next == null) {
             response = LLMResponse.of(AgentDecision.unknown("No scripted response available"));
+        } else if (next instanceof Scripted scriptedItem) {
+            response = new LLMResponse(scriptedItem.content(), scriptedItem.decision(), 0, 0, 0);
         } else if (next instanceof AgentDecision decision) {
             response = LLMResponse.of(decision);
         } else {

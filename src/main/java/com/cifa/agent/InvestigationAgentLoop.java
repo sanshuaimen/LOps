@@ -26,7 +26,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * The controlled investigation loop. Each round the model may do exactly one
  * of: call one whitelisted tool, submit a diagnosis, or declare unknown.
  * Whether anything actually ends is decided here — budget, evidence
- * authenticity and sufficiency floors are deterministic code.
+ * authenticity and sufficiency floors are deterministic code. The optional
+ * {@link JudgmentAgent} adds a semantic layer-3 review AFTER those gates;
+ * it can send a submission back once for revision and is otherwise advisory
+ * (its failure never blocks a diagnosis).
  */
 public final class InvestigationAgentLoop {
 
@@ -53,11 +56,20 @@ public final class InvestigationAgentLoop {
     private final InvestigationBudget budget;
     private final String taskId;
     private final String model;
+    private final JudgmentAgent judge;
     private final AtomicLong sequence = new AtomicLong();
 
+    /** No semantic review: pre-judge signature, behavior identical to P0-P3. */
     public InvestigationAgentLoop(LLMProvider provider, ToolRegistry tools, EvidenceCatalog catalog,
                                   EvidenceVerifier verifier, TraceRecorder trace,
                                   InvestigationBudget budget, String taskId, String model) {
+        this(provider, tools, catalog, verifier, trace, budget, taskId, model, null);
+    }
+
+    public InvestigationAgentLoop(LLMProvider provider, ToolRegistry tools, EvidenceCatalog catalog,
+                                  EvidenceVerifier verifier, TraceRecorder trace,
+                                  InvestigationBudget budget, String taskId, String model,
+                                  JudgmentAgent judge) {
         this.provider = provider;
         this.tools = tools;
         this.catalog = catalog;
@@ -66,6 +78,7 @@ public final class InvestigationAgentLoop {
         this.budget = budget;
         this.taskId = taskId;
         this.model = model;
+        this.judge = judge;
     }
 
     public AgentOutcome run(String taskBrief) throws InterruptedException {
@@ -79,6 +92,10 @@ public final class InvestigationAgentLoop {
         InvestigationState state = new InvestigationState(taskId);
         List<LLMMessage> messages = new ArrayList<>();
         messages.add(LLMMessage.user(taskBrief));
+        // Single-revision discipline for semantic review: one send-back, then a
+        // deterministic downgrade. The counter is loop-local by design — it never
+        // leaks into the shared state the agent could theoretically observe.
+        int judgeRejections = 0;
 
         try {
             while (true) {
@@ -145,10 +162,49 @@ public final class InvestigationAgentLoop {
                                     0, "unknown", AgentStopReason.INSUFFICIENT_EVIDENCE.name(), "");
                             return new AgentOutcome(diagnosis, AgentStopReason.INSUFFICIENT_EVIDENCE, state);
                         }
+                        // Layer 3, semantic review — only reachable after layers 1-2
+                        // accepted the submission. The judge can send the submission
+                        // back once; its verdict otherwise stamps the conclusion and
+                        // its failure never blocks it.
+                        JudgmentAgent.Judgment judgment = null;
+                        if (judge != null) {
+                            List<Evidence> cited = decision.evidenceIds().stream()
+                                    .map(catalog::find)
+                                    .flatMap(java.util.Optional::stream)
+                                    .toList();
+                            judgment = judge.review(decision.category(), decision.rootCause(), cited);
+                            trace(state, "judgment", "", "", JudgmentAgent.PROMPT_VERSION + " semantic review",
+                                    decision.evidenceIds(), 0,
+                                    judgment.verdict().name().toLowerCase(java.util.Locale.ROOT), "",
+                                    judgment.reason());
+                            if (judgment.verdict() == JudgmentAgent.Verdict.UNSUPPORTED) {
+                                if (judgeRejections == 0) {
+                                    judgeRejections++;
+                                    messages.add(LLMMessage.assistant(response.content()));
+                                    messages.add(LLMMessage.user(
+                                            "[semantic review rejected] the cited evidence does not support this root"
+                                                    + " cause: " + judgment.reason()
+                                                    + "\nRevise the conclusion so the cited evidence demonstrates it,"
+                                                    + " cite evidence that does, or declare unknown."));
+                                    break;
+                                }
+                                state.stop(AgentStopReason.JUDGE_UNSUPPORTED);
+                                StructuredDiagnosis downgraded = new StructuredDiagnosis("UNKNOWN",
+                                        "submitted root cause rejected by semantic review after one revision: "
+                                                + judgment.reason(),
+                                        decision.evidenceIds(), 0, "", true,
+                                        AgentStopReason.JUDGE_UNSUPPORTED,
+                                        JudgmentAgent.Verdict.UNSUPPORTED.name());
+                                trace(state, "conclusion", "", "", summarize(decision), decision.evidenceIds(),
+                                        0, "unknown", AgentStopReason.JUDGE_UNSUPPORTED.name(), judgment.reason());
+                                return new AgentOutcome(downgraded, AgentStopReason.JUDGE_UNSUPPORTED, state);
+                            }
+                        }
+                        String judgeStamp = judgment == null ? "" : judgment.verdict().name();
                         state.stop(AgentStopReason.COMPLETED);
                         StructuredDiagnosis diagnosis = new StructuredDiagnosis(decision.category(),
                                 decision.rootCause(), decision.evidenceIds(), decision.confidence(),
-                                decision.suggestedAction(), false, AgentStopReason.COMPLETED);
+                                decision.suggestedAction(), false, AgentStopReason.COMPLETED, judgeStamp);
                         trace(state, "conclusion", "", "", summarize(decision), decision.evidenceIds(),
                                 0, "completed", AgentStopReason.COMPLETED.name(), "");
                         return new AgentOutcome(diagnosis, AgentStopReason.COMPLETED, state);
