@@ -159,6 +159,30 @@ java -cp target/analyzer.jar com.cifa.cli.MemoryCommand query --log path/to/buil
 Layer gate: only `regression`/`robustness` cases may seed the memory; the
 `accept` layer is the held-out exam and is rejected here and in the store.
 
+### Distilling diagnoses into semantic memory
+
+The notebook's own A/B verdict was "episodic case transcripts don't raise
+accuracy — entry information density beats retrieval mechanics". `distill`
+is the answer: it turns ONE completed diagnosis into a single de-case-ified
+semantic lesson (generalized failure pattern + actionable remediation), then
+consolidates it against similar stored entries before anything is written.
+
+```bash
+java -cp target/analyzer.jar com.cifa.cli.MemoryCommand distill \
+  --trace agent-trace-<taskId>.jsonl --task-id <taskId> [--log build.log] \
+  --provider fake|ollama|anthropic|deepseek [--model m]
+```
+
+Two LLM steps, each behind a deterministic gate: **extract** (one lesson per
+diagnosis; the recall signature comes from the build log when `--log` is
+given, never from the model) and **consolidate** (`add` / `update` / `noop`
+against the BM25-similar entries already stored — the notebook never grows
+unbounded duplicates). A model that returns garbage — or nothing worth
+storing — skips with a reason and the notebook is left untouched; a broken
+distiller can never corrupt it. Entries are stamped layer `distilled` and
+source `distilled:memory-distill-v1`; ids are content-addressed, so identical
+lessons deduplicate by construction.
+
 ## HTTP server
 
 A Spring Boot shell (`DiagnosisServerApplication`) exposes the pipeline over

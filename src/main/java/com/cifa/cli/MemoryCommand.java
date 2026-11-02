@@ -3,6 +3,7 @@ package com.cifa.cli;
 import com.cifa.memory.FailureMemoryEntry;
 import com.cifa.memory.FailureMemoryRetrieval;
 import com.cifa.memory.FailureMemoryStore;
+import com.cifa.memory.MemoryDistiller;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,21 +24,34 @@ import java.util.List;
  *   memory list  [--file failure-memory.json]
  *   memory stats [--file failure-memory.json]
  *   memory query --text "java.lang.NullPointerException ..." [--k 2] [--file ...]
+ *   memory distill --trace <agent-trace.jsonl> --task-id <id> [--log <build.log>]
+ *                  --provider fake|ollama|anthropic|deepseek [--model <m>]
+ *                  [--fake-script <file>] [--k 3] [--file failure-memory.json]
  */
 public final class MemoryCommand {
 
     private static final String USAGE = """
             memory — failure memory ("错题本") maintenance
 
-            Commands: add | list | stats | query
+            Commands: add | list | stats | query | distill
 
             add requires: --id --case-id --layer --category --root-cause
               Optional: --log <build.log> (derives the signature from the first
               exception line) --signature --exception --keywords "a,b"
               --evidence-hints "a;b" --remediation --source --file
-            Layer gate: only regression/robustness may seed the memory; the accept
-            layer is the held-out exam and is rejected here and in the store.
+            Layer gate: only regression/robustness/distilled may seed the memory;
+            the accept layer is the held-out exam and is rejected here and in
+            the store.
             query retrieves the top-k notebook entries for a log excerpt.
+            distill turns ONE completed diagnosis (its --trace) into a single
+              de-case-ified semantic lesson via an LLM, then consolidates it
+              against similar stored entries (add/update/noop). Best-effort by
+              design: a model that returns garbage (or nothing worth storing)
+              skips with a reason and the notebook is left untouched — it never
+              blocks on a broken distillation. Requires --task-id (the diagnosed
+              task's id; retrieval excludes its own case). --log, when given,
+              makes the recall signature deterministic (first exception line)
+              instead of model-proposed.
             """;
 
     public static void main(String[] args) {
@@ -50,16 +64,22 @@ public final class MemoryCommand {
         } catch (Usage e) {
             err.println("memory: " + e.getMessage() + (e.usage ? "\n\n" + USAGE : ""));
             return 2;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // cancellation is not a memory result
+            err.println("memory interrupted");
+            return 130;
         } catch (Exception e) {
             err.println("memory failed: " + (e.getMessage() == null ? e.toString() : e.getMessage()));
             return 1;
         }
     }
 
-    private static final class Usage extends RuntimeException {
+    /** Package-private so {@link LlmProviders} (same package) can raise the
+     * same usage-error channel instead of inventing a second one. */
+    static final class Usage extends RuntimeException {
         private final boolean usage;
 
-        private Usage(String message, boolean usage) {
+        Usage(String message, boolean usage) {
             super(message);
             this.usage = usage;
         }
@@ -88,6 +108,7 @@ public final class MemoryCommand {
         FailureMemoryStore store = new FailureMemoryStore(file);
         return switch (command) {
             case "add" -> add(store, flags, out);
+            case "distill" -> distill(store, flags, out);
             case "list" -> {
                 store.entries().forEach(entry -> out.println(entry.id() + " " + entry.caseId()
                         + " [" + entry.layer() + "] " + entry.category() + ": " + entry.rootCauseSummary()));
@@ -115,8 +136,55 @@ public final class MemoryCommand {
                         + entry.rootCauseSummary()));
                 yield 0;
             }
-            default -> throw new Usage("unknown command '" + command + "' (add|list|stats|query)", true);
+            default -> throw new Usage("unknown command '" + command + "' (add|list|stats|query|distill)", true);
         };
+    }
+
+    /**
+     * The write-side of the notebook's lesson learned ("条目信息密度 > 检索机制"):
+     * distill one diagnosis into semantic memory, consolidate, persist. Each
+     * LLM step is gated in {@link MemoryDistiller}; a skip or noop is a normal,
+     * reported outcome — only a real store failure turns into a nonzero exit.
+     */
+    private static int distill(FailureMemoryStore store, java.util.Map<String, String> flags,
+                               java.io.PrintStream out) throws Exception {
+        Path trace = Path.of(required(flags, "--trace"));
+        String taskId = required(flags, "--task-id");
+        LlmProviders.Selection selection = LlmProviders.create(
+                flags.getOrDefault("--provider", "ollama"),
+                flags.get("--model"),
+                flags.get("--fake-script"));
+
+        String signature = flags.containsKey("--log")
+                ? firstExceptionLine(Path.of(flags.get("--log")))
+                : null;
+        MemoryDistiller distiller = new MemoryDistiller(selection.provider(), selection.model());
+        MemoryDistiller.Distillation distillation = distiller.distill(
+                Files.readString(trace), taskId, signature);
+        if (distillation.candidate() == null) {
+            out.println("distill skipped: " + distillation.skipReason());
+            return 0;
+        }
+
+        FailureMemoryEntry candidate = distillation.candidate();
+        int k = Integer.parseInt(flags.getOrDefault("--k", "3"));
+        List<FailureMemoryEntry> similar = new FailureMemoryRetrieval(store.entries())
+                .retrieve(String.join(" ", candidate.retrievalTokens()), candidate.caseId(), k, 0.0);
+        MemoryDistiller.Consolidation consolidation = distiller.consolidate(candidate, similar);
+        switch (consolidation.action()) {
+            case ADD -> {
+                store.append(consolidation.entry());
+                out.println("added: " + consolidation.entry().id());
+            }
+            case UPDATE -> {
+                store.update(consolidation.entry());
+                out.println("updated: " + consolidation.entry().id());
+            }
+            case NOOP -> out.println("noop");
+        }
+        out.println("reason: " + consolidation.reason());
+        out.println("notebook: " + store.size() + " entries");
+        return 0;
     }
 
     private static int add(FailureMemoryStore store, java.util.Map<String, String> flags,

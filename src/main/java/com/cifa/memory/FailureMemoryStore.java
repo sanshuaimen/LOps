@@ -20,8 +20,11 @@ import java.util.Optional;
 public final class FailureMemoryStore {
 
     /** Layers whose failures may seed the memory. The accept layer is the exam —
-     * its cases (and goldens) must never land in the notebook. */
-    public static final List<String> ALLOWED_SOURCE_LAYERS = List.of("regression", "robustness");
+     * its cases (and goldens) must never land in the notebook. "distilled" marks
+     * entries produced by the MemoryDistiller from a completed real diagnosis —
+     * not eval data, so the exam-exclusion concern does not apply. */
+    public static final List<String> ALLOWED_SOURCE_LAYERS =
+            List.of("regression", "robustness", "distilled");
 
     private final Path file;
     private final List<FailureMemoryEntry> entries;
@@ -78,6 +81,25 @@ public final class FailureMemoryStore {
         entries.add(entry);
         write();
         return entry;
+    }
+
+    /** Replaces an existing entry in place (same id) and persists. Used by the
+     * consolidation path: merging new evidence into an existing lesson must not
+     * change its identity. Layer and existence are re-checked — a replacement
+     * may neither smuggle in a forbidden layer nor invent an id. */
+    public FailureMemoryEntry update(FailureMemoryEntry replacement) throws IOException {
+        if (!ALLOWED_SOURCE_LAYERS.contains(replacement.layer())) {
+            throw new IllegalArgumentException("layer '" + replacement.layer()
+                    + "' may not seed the failure memory (allowed: " + ALLOWED_SOURCE_LAYERS + ")");
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            if (entries.get(i).id().equals(replacement.id())) {
+                entries.set(i, replacement);
+                write();
+                return replacement;
+            }
+        }
+        throw new IllegalArgumentException("no memory entry with id: " + replacement.id());
     }
 
     private void write() throws IOException {
