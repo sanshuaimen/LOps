@@ -3,6 +3,7 @@ package com.cifa.eval;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public record EvalResult(
@@ -69,5 +70,37 @@ public record EvalResult(
         json.put("stopReason", stopReason);
         json.put("error", error);
         return json;
+    }
+
+    /** Mirrors {@link #toJson()}: the paired gate (evolution) reloads stored
+     * reports to compare baseline vs candidate on the same cases. */
+    public static EvalResult fromJson(JSONObject json) {
+        JSONArray calls = json.optJSONArray("toolCalls");
+        List<String> toolCalls = new ArrayList<>();
+        if (calls != null) {
+            for (int i = 0; i < calls.length(); i++) {
+                toolCalls.add(calls.getString(i));
+            }
+        }
+        return new EvalResult(
+                json.optString("caseId"),
+                json.optString("expectedCategory"),
+                json.optString("actualCategory"),
+                json.optString("layer"),
+                json.optBoolean("categoryCorrect"),
+                json.optBoolean("rootCauseCorrect"),
+                json.optBoolean("evidenceCorrect"),
+                json.optBoolean("evidenceSufficient"),
+                json.optBoolean("unknownCorrect"),
+                json.optBoolean("forbiddenConclusionFree"),
+                json.optBoolean("requiredToolsSatisfied"),
+                toolCalls,
+                json.optBoolean("fullSweep"),
+                json.optInt("irrelevantToolCalls", 0),
+                json.optInt("repeatedToolCalls", 0),
+                json.optInt("tokenCount", 0),
+                json.optLong("elapsedMillis", 0L),
+                json.optString("stopReason"),
+                json.optString("error"));
     }
 }

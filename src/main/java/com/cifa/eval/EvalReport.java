@@ -121,6 +121,28 @@ public record EvalReport(String subject, String version, Instant createdAt, List
         return json.toString(2);
     }
 
+    /** Mirrors {@link #toJson()}: reloads a stored report for the paired gate
+     * (evolution) — only subject/version/createdAt/results are read; the
+     * metrics block is recomputable and never trusted from the file. */
+    public static EvalReport fromJson(String json) {
+        JSONObject root = new JSONObject(json);
+        JSONArray cases = root.optJSONArray("results");
+        List<EvalResult> results = new java.util.ArrayList<>();
+        if (cases != null) {
+            for (int i = 0; i < cases.length(); i++) {
+                results.add(EvalResult.fromJson(cases.getJSONObject(i)));
+            }
+        }
+        java.time.Instant createdAt;
+        try {
+            createdAt = java.time.Instant.parse(root.optString("createdAt"));
+        } catch (Exception e) {
+            createdAt = java.time.Instant.EPOCH;
+        }
+        return new EvalReport(root.optString("subject", "reloaded"), root.optString("version", ""),
+                createdAt, results);
+    }
+
     public String toMarkdown() {
         StringBuilder markdown = new StringBuilder();
         markdown.append("# Evaluation: ").append(subject).append("\n\n");
