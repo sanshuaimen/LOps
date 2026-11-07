@@ -12,3 +12,12 @@ fixtures/eval/git-regression-checkout/repo/
 fixtures/eval/git-revert-regression/repo/
 failure-memory.json
 agent-trace-*.jsonl
+# evolution/flywheel runtime artifacts (local stores, never committed — same discipline as failure-memory.json)
+skills.json
+skills-staged.json
+skills-candidate.json
+skill-audit*.jsonl
+skill-usage.json
+rejected-paths.json
+partition.json
+evolution-snapshots.jsonl

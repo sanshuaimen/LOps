@@ -248,4 +248,83 @@ One package per pipeline stage, each a typed record contract in/out:
     comparison reports, optional `JudgeGrader`)
 12. `memory` — failure-memory store + retrieval (signature-based top-k)
 13. `trace` — JSONL trace recorder for every agent round and gate decision
-14. `web`/`persistence` — Spring Boot HTTP shell and task persistence
+14. `evolution` — self-evolution & data-flywheel surface (skills store, paired
+    gate, double-blind holdout partition, harvest pipeline, decay, snapshots)
+15. `web`/`persistence` — Spring Boot HTTP shell and task persistence
+
+## Self-evolution & data flywheel (`evolution` command)
+
+The system closes the loop between *running* (traces), *measuring* (golden
+corpus), and *changing* (behavior assets). Every behavior change is a
+declarative, diffable data file — `skills.json` — so merging is a file
+change, rollback is a byte restore, and the audit trail is append-only JSONL.
+
+The loop, end to end (all offline; the golden corpus is the only judge):
+
+```
+run diagnosis (live or eval)  →  trace JSONL + judge verdict
+        │  harvest        (double-blind: holdout-sourced traces refused at the door)
+        ▼
+memory entries (错题本)  +  skill candidates (CANDIDATE | CONFLICTED-quarantined)
+        │  stage          (candidate flips ACTIVE on a staged copy)
+        ▼
+eval twice (baseline skills vs staged skills, proposal set only)
+        │  gate           (paired win/loss: zero regressions on solved cases is
+        │                  a HARD constraint; holdout ids in reports refuse loudly)
+        ▼
+PROMOTE (routing-kind needs EVOLUTION_APPROVAL)  |  REJECT (tombstone + negative-knowledge ledger)
+        │  snapshot       (skills.json bytes ↔ SHA-256 ↔ eval report ↔ dataset version)
+        ▼
+rollback anytime — byte-identical restore;  decay — survival-scored dormancy
+```
+
+Quick tour:
+
+```bash
+# 1. split the corpus once: fixed holdout (~30%, double-blind) + rotating proposal set
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand partition
+
+# 2. reflow completed traces into memory + skill candidates (fake provider = free)
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand harvest \
+  --traces 'agent-trace-*.jsonl' --skills skills.json --memory failure-memory.json \
+  --rejected rejected-paths.json --partition partition.json --provider fake
+
+# 3. A/B a candidate: stage it, eval both sides, gate the reports
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand stage \
+  --skills skills.json --id skill-abc123 --out skills-staged.json
+java -jar target/analyzer.jar --log ... --repo ... --mode agent --skills skills.json   # live: skills inject deterministically
+#   eval --skills skills-staged.json ... vs eval --skills skills.json ...
+
+# 4. apply the verdict (promote or tombstone), snapshot, decay, rollback
+EVOLUTION_APPROVAL=alice java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand gate ...
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand snapshot --skills skills.json --eval-report ...
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand decay --skills skills.json --usage skill-usage.json
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand rollback --seq 1 --skills skills.json
+```
+
+Design invariants, each pinned by a test:
+
+- **State machine**: `CANDIDATE → ACTIVE → (STALE | SUPERSEDED) → ARCHIVED`,
+  conflicts quarantine as `CONFLICTED` (the active rule keeps governing until a
+  human arbitrates); ARCHIVED is a tombstone — never deleted, never resurrected.
+- **Double-blind holdout**: the fixed holdout slice never reaches the Proposer's
+  inputs (harvest) and never reaches merge decisions (gate) — enforced twice, loudly.
+- **Paired gate, not aggregate mean**: `wins ≥ minWins` AND `zero regressions on
+  previously-solved cases`; pass-rate deltas are display-only (the A/B variance lesson).
+- **Routing skills live in the deterministic layer**: the router matches in plain
+  code (category + symptom keywords), the model never chooses which skill applies,
+  and usage hits feed the decay score (live signal dominates eval signal).
+- **No mutation without an audit line**; ROUTING promotions need a named approver;
+  decay refuses a library under `--min-store` — governance theater is declined.
+- **Isolation, mechanically**: ArchUnit keeps the eval package away from both
+  stores' write paths (memory AND skills).
+
+Growing the corpus (data flywheel Tier 1): inject a known fault into a copy of a
+real Maven project, build the mutated copy for a REAL log, get a golden-case
+skeleton whose gold label falls out of the injection for free:
+
+```bash
+java -cp target/analyzer.jar com.cifa.cli.EvolutionCommand inject \
+  --repo /path/to/real-maven-project --fault dependency-version --dry-run
+# review target/injected-*/case.json, then move under fixtures/eval/<id>/ and re-partition
+```
