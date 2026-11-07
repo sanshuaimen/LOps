@@ -321,7 +321,7 @@ public final class MemoryDistiller {
         return List.copyOf(keywords);
     }
 
-    static JSONObject extractObject(String content) {
+    public static JSONObject extractObject(String content) {
         String trimmed = content == null ? "" : content.trim();
         int start = trimmed.indexOf('{');
         int end = trimmed.lastIndexOf('}');
@@ -338,7 +338,7 @@ public final class MemoryDistiller {
         return value.length() <= cap ? value : value.substring(0, cap) + "...[capped]";
     }
 
-    static String tail(String text, int cap) {
+    public static String tail(String text, int cap) {
         if (text == null) {
             return "";
         }
