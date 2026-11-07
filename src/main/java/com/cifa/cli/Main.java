@@ -156,6 +156,20 @@ public final class Main {
 
         var agentBudget = com.cifa.agent.InvestigationBudget.defaults();
 
+        // Evolution wiring: when a skills.json exists in the workdir, gate-verified
+        // skills join the live agent (deterministic routing, instruction layer only).
+        // Usage hits are recorded (LIVE source) and flushed — the decay mechanism's input.
+        com.cifa.evolution.SkillsRouter skillsRouter = null;
+        com.cifa.evolution.SkillUsageStore skillUsage = null;
+        Path skillsFile = Path.of("skills.json");
+        if (java.nio.file.Files.exists(skillsFile)) {
+            com.cifa.evolution.SkillsStore skillsStore = new com.cifa.evolution.SkillsStore(skillsFile,
+                    new com.cifa.evolution.SkillAuditLog(Path.of("skill-audit.jsonl")));
+            skillUsage = new com.cifa.evolution.SkillUsageStore(Path.of("skill-usage.json"));
+            skillsRouter = new com.cifa.evolution.SkillsRouter(skillsStore.active(), skillUsage,
+                    com.cifa.evolution.SkillUsageStore.Source.LIVE);
+        }
+
         try (com.cifa.trace.JsonlTraceRecorder traceRecorder = new com.cifa.trace.JsonlTraceRecorder(traceFile)) {
             // 降级链: agent MODEL_FAILURE → baseline (same provider) → rules-only tail.
             // The degrade decision is deterministic service code, never the dead agent's.
@@ -165,7 +179,10 @@ public final class Main {
                     ? new com.cifa.agent.JudgmentAgent(llm, modelName) : null;
             var outcome = new com.cifa.service.FallbackDiagnosisOrchestrator().diagnose(
                     new com.cifa.service.DiagnosisRequest(logPath, repoRoot, budget),
-                    llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory, judge);
+                    llm, modelName, agentBudget, taskId, traceRecorder, flakyHistory, judge, skillsRouter);
+            if (skillUsage != null) {
+                skillUsage.flush();
+            }
 
             if (outcome.degraded()) {
                 System.err.println("DEGRADED: " + outcome.fallbackReason()

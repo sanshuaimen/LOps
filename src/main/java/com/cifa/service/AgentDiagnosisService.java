@@ -29,6 +29,7 @@ import com.cifa.trace.TraceRecorder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Wires deterministic preprocessing into a controlled investigation:
@@ -67,6 +68,15 @@ public final class AgentDiagnosisService {
         return buildRegistry(new EvidenceCatalog("tool-count-probe"),
                 new RepositoryPathPolicy(Path.of(".").toAbsolutePath().normalize()),
                 "", JsonFlakyHistorySource.empty()).names().size();
+    }
+
+    /** The live registry's tool names — the Proposer's deterministic whitelist
+     * gate checks proposed ROUTING skills against exactly this set, so a skill
+     * can never name a tool the investigation loop cannot actually invoke. */
+    public Set<String> toolNames() {
+        return Set.copyOf(buildRegistry(new EvidenceCatalog("tool-names-probe"),
+                new RepositoryPathPolicy(Path.of(".").toAbsolutePath().normalize()),
+                "", JsonFlakyHistorySource.empty()).names());
     }
 
     private ToolRegistry buildRegistry(EvidenceCatalog catalog, RepositoryPathPolicy paths,
@@ -108,7 +118,27 @@ public final class AgentDiagnosisService {
                                    List<com.cifa.memory.FailureMemoryEntry> similarFailures,
                                    com.cifa.agent.JudgmentAgent judge)
             throws IOException, InterruptedException {
+        return investigate(request, llm, modelName, budget, taskId, trace, flakyHistory,
+                similarFailures, judge, null);
+    }
+
+    /** Skills variant (evolution): the {@code router} matches gate-verified
+     * skills BEFORE the loop starts, in deterministic code, from the prepared
+     * classification + log head. The matched rules travel into the system
+     * prompt's instruction section; every match records a usage hit (the
+     * decay mechanism's input). Null router keeps pre-evolution behavior. */
+    public AgentOutput investigate(DiagnosisRequest request, LLMProvider llm, String modelName,
+                                   InvestigationBudget budget, String taskId,
+                                   TraceRecorder trace, FlakyHistorySource flakyHistory,
+                                   List<com.cifa.memory.FailureMemoryEntry> similarFailures,
+                                   com.cifa.agent.JudgmentAgent judge,
+                                   com.cifa.evolution.SkillsRouter router)
+            throws IOException, InterruptedException {
         PreparedDiagnosis prepared = taskService.prepare(request);
+
+        List<com.cifa.evolution.SkillsRouter.Match> matchedSkills = router == null
+                ? List.of()
+                : router.route(prepared.context().category().name(), routingSignature(prepared));
 
         EvidenceCatalog catalog = new EvidenceCatalog(taskId);
         Evidence initialLog = registerInitialLogEvidence(catalog, prepared.normalizedLog());
@@ -121,7 +151,8 @@ public final class AgentDiagnosisService {
         InvestigationAgentLoop loop = new InvestigationAgentLoop(
                 llm, tools, catalog, verifier, trace, budget, taskId, modelName, judge);
         var outcome = loop.run(taskBrief(prepared, initialLog),
-                similarFailures == null ? List.of() : similarFailures);
+                similarFailures == null ? List.of() : similarFailures,
+                matchedSkills);
 
         List<com.cifa.trace.TraceEvent> events = trace instanceof com.cifa.trace.InMemoryTraceRecorder recorder
                 ? recorder.events()
@@ -151,6 +182,16 @@ public final class AgentDiagnosisService {
         }
         return catalog.register(EvidenceType.LOG, "normalized_log:1-" + upper,
                 excerpt.toString(), "preprocessing", 1, upper, "");
+    }
+
+    /** The deterministic match key for skill routing: category + error type +
+     * message + head of the normalized log. Plain code, no model in the loop —
+     * which skill applies is never the model's decision. */
+    private static String routingSignature(PreparedDiagnosis prepared) {
+        AnalysisContext context = prepared.context();
+        String logHead = head(prepared.normalizedLog(), 400);
+        return context.category().name() + " " + context.errorType() + " " + context.message()
+                + " " + logHead;
     }
 
     private String taskBrief(PreparedDiagnosis prepared, Evidence initialLog) {

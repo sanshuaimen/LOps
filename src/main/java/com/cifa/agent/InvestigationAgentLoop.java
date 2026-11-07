@@ -34,6 +34,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class InvestigationAgentLoop {
 
     public static final String PROMPT_VERSION = "p0-v1";
+    /** Stamped when gate-verified skills were injected — behavior versions must be
+     * distinguishable in the trace, or "which ruleset produced this" is unanswerable. */
+    public static final String PROMPT_VERSION_SKILLS = "p1-skills";
 
     public record AgentOutcome(StructuredDiagnosis diagnosis, AgentStopReason stopReason, InvestigationState state) {
     }
@@ -58,6 +61,9 @@ public final class InvestigationAgentLoop {
     private final String model;
     private final JudgmentAgent judge;
     private final AtomicLong sequence = new AtomicLong();
+    /** Prompt version stamped into every trace event of the active run; switches
+     * to {@link #PROMPT_VERSION_SKILLS} when skills are injected. */
+    private String activePromptVersion = PROMPT_VERSION;
 
     /** No semantic review: pre-judge signature, behavior identical to P0-P3. */
     public InvestigationAgentLoop(LLMProvider provider, ToolRegistry tools, EvidenceCatalog catalog,
@@ -89,6 +95,16 @@ public final class InvestigationAgentLoop {
      * system prompt as reference examples, under the EVIDENCE ONLY discipline. */
     public AgentOutcome run(String taskBrief, List<com.cifa.memory.FailureMemoryEntry> similarFailures)
             throws InterruptedException {
+        return run(taskBrief, similarFailures, List.of());
+    }
+
+    /** Skills variant (evolution): {@code matchedSkills} are the DETERMINISTICALLY
+     * routed, gate-verified rules for this failure — rendered into the system
+     * prompt's instruction section (they are rules, NOT evidence), and stamped
+     * into the trace's promptVersion so behavior versions stay distinguishable. */
+    public AgentOutcome run(String taskBrief, List<com.cifa.memory.FailureMemoryEntry> similarFailures,
+                            List<com.cifa.evolution.SkillsRouter.Match> matchedSkills)
+            throws InterruptedException {
         InvestigationState state = new InvestigationState(taskId);
         List<LLMMessage> messages = new ArrayList<>();
         messages.add(LLMMessage.user(taskBrief));
@@ -96,6 +112,8 @@ public final class InvestigationAgentLoop {
         // deterministic downgrade. The counter is loop-local by design — it never
         // leaks into the shared state the agent could theoretically observe.
         int judgeRejections = 0;
+        boolean skillsActive = matchedSkills != null && !matchedSkills.isEmpty();
+        this.activePromptVersion = skillsActive ? PROMPT_VERSION_SKILLS : PROMPT_VERSION;
 
         try {
             while (true) {
@@ -107,7 +125,9 @@ public final class InvestigationAgentLoop {
                 LLMResponse response;
                 try {
                     response = invokeWithRetry(new LLMRequest(
-                            systemPrompt(tools.schemas(), similarFailures), messages, tools.schemas()), state);
+                            systemPrompt(tools.schemas(), similarFailures,
+                                    skillsActive ? matchedSkills : List.of()),
+                            messages, tools.schemas()), state);
                 } catch (ModelFailure failure) {
                     state.stop(AgentStopReason.MODEL_FAILURE);
                     trace(state, "model_failure", "", "", "", List.of(), 0, "failed", "", failure.summary);
@@ -344,7 +364,8 @@ public final class InvestigationAgentLoop {
      * see docs/decisions.md — no tools field travels on the wire).
      */
     private String systemPrompt(List<com.cifa.llm.ToolSchema> tools,
-                                List<com.cifa.memory.FailureMemoryEntry> similarFailures) {
+                                List<com.cifa.memory.FailureMemoryEntry> similarFailures,
+                                List<com.cifa.evolution.SkillsRouter.Match> matchedSkills) {
         StringBuilder prompt = new StringBuilder();
         String categories = java.util.Arrays.stream(com.cifa.classification.FailureCategory.values())
                 .map(category -> "- " + category.name() + ": " + category.triageDefinition())
@@ -373,9 +394,18 @@ public final class InvestigationAgentLoop {
                 - Cite only evidence ids that were registered during this task.
                 - If the evidence does not support a root cause, output unknown instead of guessing.
                 - Finish as soon as the evidence supports a conclusion; do not call more tools than needed.
-
-                Available tools (call at most one per turn):
                 """.formatted(categories));
+        if (!matchedSkills.isEmpty()) {
+            // Skills are RULES — the deterministic control plane, gate-verified before
+            // they were allowed here. They join the instruction section on purpose and
+            // must never be confused with the EVIDENCE ONLY blocks below.
+            prompt.append("\nValidated investigation skills (from paired-gate-verified experience;\n")
+                    .append("RULES refining the routing above, not evidence):\n");
+            for (com.cifa.evolution.SkillsRouter.Match match : matchedSkills) {
+                prompt.append(match.render()).append('\n');
+            }
+        }
+        prompt.append("\nAvailable tools (call at most one per turn):\n");
         for (com.cifa.llm.ToolSchema tool : tools) {
             prompt.append("- ").append(tool.name()).append(": ").append(tool.description()).append('\n');
             var properties = tool.parameters().optJSONObject("properties");
@@ -412,7 +442,7 @@ public final class InvestigationAgentLoop {
                        String hypothesis, List<String> evidenceIds, int tokenCount, String status,
                        String stopReason, String error) {
         TraceEvent event = new TraceEvent(taskId, sequence.incrementAndGet(), java.time.Instant.now(),
-                eventType, state.round(), model, PROMPT_VERSION, hypothesis, toolName, argumentsSummary,
+                eventType, state.round(), model, activePromptVersion, hypothesis, toolName, argumentsSummary,
                 evidenceIds, tokenCount, state.elapsed().toMillis(), status, stopReason, error);
         trace.record(event);
     }

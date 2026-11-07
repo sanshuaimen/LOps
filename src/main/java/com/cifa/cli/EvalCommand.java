@@ -103,6 +103,8 @@ public final class EvalCommand {
         boolean skipBaseline;
         boolean judge;
         boolean judgeGrader;
+        Path skillsFile;
+        Path skillsUsageFile;
     }
 
     private static final class UsageException extends RuntimeException {
@@ -148,6 +150,8 @@ public final class EvalCommand {
                 case "--skip-baseline" -> options.skipBaseline = true;
                 case "--judge" -> options.judge = true;
                 case "--judge-grader" -> options.judgeGrader = true;
+                case "--skills" -> options.skillsFile = Path.of(value(args, ++i, flag));
+                case "--skills-usage" -> options.skillsUsageFile = Path.of(value(args, ++i, flag));
                 default -> throw new UsageException("unknown option '" + flag + "'");
             }
         }
@@ -262,6 +266,30 @@ public final class EvalCommand {
                 options.judge ? provider -> new com.cifa.agent.JudgmentAgent(provider, modelName) : null;
         String judgeNote = options.judge ? "on" : "off";
 
+        // Optional skills A/B side (evolution): --skills stages a behavior asset
+        // file for this run (the paired gate's candidate or baseline side). Usage
+        // telemetry is recorded ONLY when --skills-usage names a ledger — eval
+        // runs otherwise stay write-free, keeping CI pure.
+        java.util.function.Function<GoldenCase, com.cifa.evolution.SkillsRouter> skillsFor = null;
+        String skillsNote = "off";
+        com.cifa.evolution.SkillUsageStore skillUsage = null;
+        if (options.skillsFile != null) {
+            com.cifa.evolution.SkillsStore skillsStore = new com.cifa.evolution.SkillsStore(
+                    options.skillsFile, new com.cifa.evolution.SkillAuditLog(
+                            options.skillsFile.resolveSibling("skill-audit-eval.jsonl")));
+            if (options.skillsUsageFile != null) {
+                final com.cifa.evolution.SkillUsageStore usage =
+                        new com.cifa.evolution.SkillUsageStore(options.skillsUsageFile);
+                skillUsage = usage;
+                skillsFor = ignoredCase -> new com.cifa.evolution.SkillsRouter(
+                        skillsStore.active(), usage, com.cifa.evolution.SkillUsageStore.Source.EVAL);
+                skillsNote = skillsStore.active().size() + " active (usage recorded)";
+            } else {
+                skillsFor = ignoredCase -> com.cifa.evolution.SkillsRouter.observeOnly(skillsStore.active());
+                skillsNote = skillsStore.active().size() + " active (observe-only)";
+            }
+        }
+
         List<EvalReport> baselineRuns = new ArrayList<>();
         List<EvalReport> agentRuns = new ArrayList<>();
         List<Path> written = new ArrayList<>();
@@ -280,7 +308,11 @@ public final class EvalCommand {
             EvalReport baseline = options.skipBaseline
                     ? null
                     : runner.runBaseline(cases, baselineProvider);
-            EvalReport agent = runner.runAgent(cases, agentProvider, modelName, memoryFor, judgeFromProvider);
+            EvalReport agent = runner.runAgent(cases, agentProvider, modelName, memoryFor,
+                    judgeFromProvider, skillsFor);
+            if (skillUsage != null) {
+                skillUsage.flush();
+            }
             if (baseline != null) {
                 baselineRuns.add(baseline);
             }
@@ -289,7 +321,8 @@ public final class EvalCommand {
             ReportMetadata agentMetadata = new ReportMetadata(
                     DatasetVersion.of(cases), CodeVersion.shortSha(),
                     providerLabel + (options.memoryFile != null ? "-memory" : "") + (options.judge ? "-judge" : "")
-                            + (options.judgeGrader && realProvider != null ? "-grading" : ""),
+                            + (options.judgeGrader && realProvider != null ? "-grading" : "")
+                            + (options.skillsFile != null ? "-skills" : ""),
                     metadata.runId(), metadata.generatedAt());
             String markdown;
             if (baseline != null) {
@@ -321,7 +354,8 @@ public final class EvalCommand {
 
         out.println("eval complete: layer=" + options.layer + " cases=" + cases.size()
                 + " provider=" + providerLabel + (options.provider.equals("fake") ? " (fake)" : " (REAL MODEL)")
-                + " memory=" + memoryNote + " judge=" + judgeNote + " grading=" + gradingNote);
+                + " memory=" + memoryNote + " judge=" + judgeNote + " grading=" + gradingNote
+                + " skills=" + skillsNote);
         written.forEach(path -> out.println("  " + path.toAbsolutePath()));
         return 0;
     }

@@ -95,6 +95,19 @@ public final class EvalRunner {
                                String modelName,
                                Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor,
                                Function<LLMProvider, com.cifa.agent.JudgmentAgent> judgeFromProvider) {
+        return runAgent(cases, providers, modelName, memoryFor, judgeFromProvider, null);
+    }
+
+    /** Skills A/B variant (evolution): {@code skillsFor} supplies the
+     * deterministically-matched skill router per case (the CLI owns the store —
+     * the eval package stays store-free, same discipline as memory). Null keeps
+     * the raw-agent behavior: the paired gate compares whatever two sides the
+     * caller stages. */
+    public EvalReport runAgent(List<GoldenCase> cases, Function<GoldenCase, LLMProvider> providers,
+                               String modelName,
+                               Function<GoldenCase, List<com.cifa.memory.FailureMemoryEntry>> memoryFor,
+                               Function<LLMProvider, com.cifa.agent.JudgmentAgent> judgeFromProvider,
+                               Function<GoldenCase, com.cifa.evolution.SkillsRouter> skillsFor) {
         AgentDiagnosisService service = new AgentDiagnosisService();
         int availableTools = service.toolCount();
         List<EvalResult> results = new ArrayList<>();
@@ -105,11 +118,13 @@ public final class EvalRunner {
                 LLMProvider caseProvider = providers.apply(goldenCase);
                 com.cifa.agent.JudgmentAgent judge =
                         judgeFromProvider == null ? null : judgeFromProvider.apply(caseProvider);
+                com.cifa.evolution.SkillsRouter router =
+                        skillsFor == null ? null : skillsFor.apply(goldenCase);
                 var output = service.investigate(
                         new DiagnosisRequest(goldenCase.logPath(), goldenCase.repoRoot(), ContextBudget.DEFAULT),
                         caseProvider, modelName, InvestigationBudget.defaults(),
                         "eval-" + goldenCase.id(), trace, flakyHistoryFor(goldenCase),
-                        memoryFor.apply(goldenCase), judge);
+                        memoryFor.apply(goldenCase), judge, router);
                 long elapsed = elapsedSince(started);
 
                 if (output.diagnosis() == null) {

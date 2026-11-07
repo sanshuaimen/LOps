@@ -72,11 +72,23 @@ public final class FallbackDiagnosisOrchestrator {
                             FlakyHistorySource flakyHistory,
                             com.cifa.agent.JudgmentAgent judge)
             throws IOException, InterruptedException {
+        return diagnose(request, llm, modelName, budget, taskId, trace, flakyHistory, judge, null);
+    }
+
+    /** Skills variant (evolution): a non-null router injects gate-verified rules
+     * into the agent attempt; the fallback chain is unchanged — skills change
+     * behavior, never the degrade discipline. */
+    public Outcome diagnose(com.cifa.service.DiagnosisRequest request, LLMProvider llm, String modelName,
+                            InvestigationBudget budget, String taskId, TraceRecorder trace,
+                            FlakyHistorySource flakyHistory,
+                            com.cifa.agent.JudgmentAgent judge,
+                            com.cifa.evolution.SkillsRouter router)
+            throws IOException, InterruptedException {
         AgentDiagnosisService.AgentOutput agent;
         String reason;
         try {
             agent = agentService.investigate(request, llm, modelName, budget, taskId, trace, flakyHistory,
-                    List.of(), judge);
+                    List.of(), judge, router);
         } catch (IOException e) {
             // Provider/tool transport died outright — degrade just like MODEL_FAILURE.
             agent = null;
